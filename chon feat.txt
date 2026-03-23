@@ -1,0 +1,152 @@
+8.7s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+8.7s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+8.7s 3 0.00s - to python to disable frozen modules.
+8.7s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+9.5s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+9.5s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+9.5s 7 0.00s - to python to disable frozen modules.
+9.5s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+13.1s 9 ============================================================
+13.1s 10 BƯỚC 1: Load context data
+13.1s 11 ============================================================
+89.9s 12 ✓ Loaded 1,987,897 users
+92.5s 13 ✓ Loaded 150,346 businesses
+97.6s 14 ✓ Loaded 131,930 businesses with checkin data
+105.0s 15 ✓ Loaded tips for 301,758 users and 106,193 businesses
+105.0s 16 
+105.0s 17 ============================================================
+105.0s 18 BƯỚC 2: Extract 24 features từ reviews
+105.0s 19 ============================================================
+108.0s 20 Loaded 100,000 reviews...
+111.1s 21 Loaded 200,000 reviews...
+114.2s 22 Loaded 300,000 reviews...
+117.2s 23 Loaded 400,000 reviews...
+120.2s 24 Loaded 500,000 reviews...
+120.2s 25 ✓ Total: 500,000 reviews loaded
+120.2s 26 ✓ Total features: 24
+120.2s 27 
+120.2s 28 ============================================================
+120.2s 29 BƯỚC 3: Discretize continuous features
+120.2s 30 ============================================================
+120.2s 31 user_review_count: 5 bins
+120.2s 32 user_avg_stars: 5 bins
+120.4s 33 user_fans: 3 bins
+120.4s 34 user_level: 4 bins
+120.4s 35 biz_stars: 4 bins
+120.4s 36 biz_review_count: 5 bins
+120.4s 37 biz_is_open: 2 bins
+120.7s 38 biz_city: 620 bins
+120.7s 39 biz_main_category: 793 bins
+120.7s 40 user_tip_count: 3 bins
+120.7s 41 user_tip_avg_length: 3 bins
+120.9s 42 user_tip_avg_comp: 1 bins
+120.9s 43 biz_tip_count: 5 bins
+120.9s 44 biz_tip_avg_length: 5 bins
+120.9s 45 biz_tip_avg_comp: 2 bins
+121.2s 46 biz_checkin_count: 5 bins
+121.2s 47 review_useful: 3 bins
+121.2s 48 review_funny: 1 bins
+121.2s 49 review_cool: 2 bins
+121.2s 50 review_text_length: 5 bins
+121.5s 51 review_hour: 24 bins
+121.5s 52 review_weekday: 7 bins
+121.5s 53 review_month: 12 bins
+121.5s 54 review_year: 18 bins
+121.5s 55 
+121.5s 56 ============================================================
+121.5s 57 BƯỚC 4: Chi-square test
+121.5s 58 ============================================================
+122.0s 59 ✓ user_review_count: chi2=55732.8, V=0.1669
+122.4s 60 ✓ user_avg_stars: chi2=162411.3, V=0.2850
+122.8s 61 ✓ user_fans: chi2=41225.9, V=0.2030
+123.2s 62 ✓ user_level: chi2=52775.5, V=0.1876
+123.6s 63 ✓ biz_stars: chi2=109483.5, V=0.2702
+124.1s 64 ✓ biz_review_count: chi2=15366.0, V=0.0877
+124.5s 65 ✓ biz_is_open: chi2=4105.0, V=0.0906
+124.9s 66 ✓ biz_city: chi2=20344.3, V=0.1009
+125.3s 67 ✓ biz_main_category: chi2=48303.8, V=0.1554
+125.7s 68 ✓ user_tip_count: chi2=13627.5, V=0.1167
+126.1s 69 ✓ user_tip_avg_length: chi2=8097.4, V=0.0900
+126.6s 70 ⚠️  user_tip_avg_comp: skip (table quá nhỏ)
+127.0s 71 ✓ biz_tip_count: chi2=20809.3, V=0.1020
+127.4s 72 ✓ biz_tip_avg_length: chi2=7208.4, V=0.0600
+127.8s 73 ✓ biz_tip_avg_comp: chi2=1727.0, V=0.0588
+128.2s 74 ✓ biz_checkin_count: chi2=21461.3, V=0.1036
+128.6s 75 ✓ review_useful: chi2=7257.3, V=0.0852
+129.1s 76 ⚠️  review_funny: skip (table quá nhỏ)
+129.5s 77 ✓ review_cool: chi2=9107.9, V=0.1350
+129.9s 78 ✓ review_text_length: chi2=21651.9, V=0.1040
+130.3s 79 ✓ review_hour: chi2=790.4, V=0.0199
+130.7s 80 ✓ review_weekday: chi2=659.2, V=0.0182
+131.1s 81 ✓ review_month: chi2=184.1, V=0.0096
+131.5s 82 ✓ review_year: chi2=20366.4, V=0.1009
+131.5s 83 
+131.5s 84 ============================================================
+131.5s 85 BƯỚC 5: Kết quả Chi-square ranking (24 features)
+131.5s 86 ============================================================
+131.5s 87 
+131.5s 88 Rank  Feature                           Chi2    Cramers V      p-value  Quan trong
+131.5s 89 ------------------------------------------------------------------------------
+131.5s 90 1     user_avg_stars                162411.3       0.2850     0.00e+00  🔥 Cao ***
+131.5s 91 2     biz_stars                     109483.5       0.2702     0.00e+00  🔥 Cao ***
+131.5s 92 3     user_review_count              55732.8       0.1669     0.00e+00  🔥 Cao ***
+131.5s 93 4     user_level                     52775.5       0.1876     0.00e+00  🔥 Cao ***
+131.5s 94 5     biz_main_category              48303.8       0.1554     0.00e+00  🔥 Cao ***
+131.5s 95 6     user_fans                      41225.9       0.2030     0.00e+00  🔥 Cao ***
+131.5s 96 7     review_text_length             21651.9       0.1040     0.00e+00  🔥 Cao ***
+131.5s 97 8     biz_checkin_count              21461.3       0.1036     0.00e+00  🔥 Cao ***
+131.5s 98 9     biz_tip_count                  20809.3       0.1020     0.00e+00  🔥 Cao ***
+131.5s 99 10    review_year                    20366.4       0.1009     0.00e+00  🔥 Cao ***
+131.5s 100 11    biz_city                       20344.3       0.1009     0.00e+00  🔥 Cao ***
+131.5s 101 12    biz_review_count               15366.0       0.0877     0.00e+00  ⚠️  TB ***
+131.5s 102 13    user_tip_count                 13627.5       0.1167     0.00e+00  🔥 Cao ***
+131.5s 103 14    review_cool                     9107.9       0.1350     0.00e+00  🔥 Cao ***
+131.5s 104 15    user_tip_avg_length             8097.4       0.0900     0.00e+00  ⚠️  TB ***
+131.5s 105 16    review_useful                   7257.3       0.0852     0.00e+00  ⚠️  TB ***
+131.5s 106 17    biz_tip_avg_length              7208.4       0.0600     0.00e+00  ⚠️  TB ***
+131.5s 107 18    biz_is_open                     4105.0       0.0906     0.00e+00  ⚠️  TB ***
+131.5s 108 19    biz_tip_avg_comp                1727.0       0.0588     0.00e+00  ⚠️  TB ***
+131.5s 109 20    review_hour                      790.4       0.0199    1.55e-111  ❌ Thap ***
+131.5s 110 21    review_weekday                   659.2       0.0182    9.07e-124  ❌ Thap ***
+131.5s 111 22    review_month                     184.1       0.0096     4.71e-19  ❌ Thap ***
+131.5s 112 
+131.5s 113 ============================================================
+131.5s 114 BƯỚC 6: Top 15 features duoc chon (tu 22 features)
+131.5s 115 ============================================================
+131.5s 116 
+131.5s 117 ✅ Giu lai (15):
+131.5s 118 + user_avg_stars               (V=0.2850)
+131.5s 119 + biz_stars                    (V=0.2702)
+131.5s 120 + user_review_count            (V=0.1669)
+131.5s 121 + user_level                   (V=0.1876)
+131.5s 122 + biz_main_category            (V=0.1554)
+131.5s 123 + user_fans                    (V=0.2030)
+131.5s 124 + review_text_length           (V=0.1040)
+131.5s 125 + biz_checkin_count            (V=0.1036)
+131.5s 126 + biz_tip_count                (V=0.1020)
+131.5s 127 + review_year                  (V=0.1009)
+131.5s 128 + biz_city                     (V=0.1009)
+131.5s 129 + biz_review_count             (V=0.0877)
+131.5s 130 + user_tip_count               (V=0.1167)
+131.5s 131 + review_cool                  (V=0.1350)
+131.5s 132 + user_tip_avg_length          (V=0.0900)
+131.5s 133 
+131.5s 134 ❌ Loai bo (7):
+131.5s 135 - review_useful                (V=0.0852)
+131.5s 136 - biz_tip_avg_length           (V=0.0600)
+131.5s 137 - biz_is_open                  (V=0.0906)
+131.5s 138 - biz_tip_avg_comp             (V=0.0588)
+131.5s 139 - review_hour                  (V=0.0199)
+131.5s 140 - review_weekday               (V=0.0182)
+131.5s 141 - review_month                 (V=0.0096)
+131.5s 142 
+131.5s 143 ✓ Da luu vao /kaggle/working/selected_features.json
+131.5s 144 -> Tiep theo: dung selected_features de train FM voi features duoc chon!
+135.5s 145 /usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+135.5s 146 cells[i][c] = re.sub('\\\\\|', '|', cell)
+135.7s 147 /usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+135.7s 148 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+136.5s 149 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+136.9s 150 [NbConvertApp] Writing 24272 bytes to __notebook__.ipynb
+139.9s 151 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+141.1s 152 [NbConvertApp] Writing 346371 bytes to __results__.html

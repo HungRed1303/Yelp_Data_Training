@@ -1,0 +1,290 @@
+9.9s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+9.9s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+9.9s 3 0.00s - to python to disable frozen modules.
+9.9s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+10.6s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+10.6s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+10.6s 7 0.00s - to python to disable frozen modules.
+10.6s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+14.4s 9 ======================================================================
+14.4s 10 🚀 FM - CHI-SQUARE SELECTED FEATURES (15 features, full data)
+14.4s 11 ======================================================================
+14.4s 12 
+14.4s 13 Loading user context from /kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset/yelp_academic_dataset_user.json...
+66.9s 14 ✓ Loaded 1,987,897 users
+66.9s 15 Loading business context from /kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset/yelp_academic_dataset_business.json...
+69.2s 16 ✓ Loaded 150,346 businesses
+69.2s 17 ✓ Unique cities: 1,381, categories: 1,160
+69.2s 18 Loading checkin context from /kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset/yelp_academic_dataset_checkin.json...
+74.4s 19 ✓ Loaded 131,930 businesses with checkin data
+74.4s 20 Loading tip context from /kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset/yelp_academic_dataset_tip.json...
+79.5s 21 ✓ Loaded tips for 301,758 users and 106,193 businesses
+79.5s 22 
+79.5s 23 Loading reviews from /kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset/yelp_academic_dataset_review.json...
+79.5s 24 ⚠️  Limited to first 1,000,000 reviews
+82.1s 25 Loaded 100,000 reviews...
+84.8s 26 Loaded 200,000 reviews...
+87.5s 27 Loaded 300,000 reviews...
+90.1s 28 Loaded 400,000 reviews...
+92.9s 29 Loaded 500,000 reviews...
+95.7s 30 Loaded 600,000 reviews...
+98.6s 31 Loaded 700,000 reviews...
+101.3s 32 Loaded 800,000 reviews...
+104.0s 33 Loaded 900,000 reviews...
+107.2s 34 Loaded 1,000,000 reviews...
+107.2s 35 ✓ Total: 1,000,000 reviews loaded
+107.2s 36 ✓ Unique users: 542,003
+107.2s 37 ✓ Unique businesses: 27,095
+107.2s 38 ✓ Numerical features per sample: 15
+107.6s 39 
+107.6s 40 ======================================================================
+107.6s 41 🚀 TRAINING FM — Chi-square Selected Features (15 features)
+107.6s 42 ======================================================================
+107.6s 43 
+107.6s 44 Dataset split:
+107.6s 45 Train: 900,000 | Val: 100,000
+107.6s 46 
+107.6s 47 Moving data to GPU...
+108.0s 48 ✓ Data on GPU
+110.1s 49 
+110.1s 50 📊 Baseline RMSE: 1.4415
+110.1s 51 
+110.1s 52 🔧 Initializing FM model on GPU:
+110.1s 53 Users: 542,003, Businesses: 27,095
+110.1s 54 Numerical features: 15
+110.1s 55 Embedding dimension: 64
+110.1s 56 Regularization: 0.001, Dropout: 0.3
+110.4s 57 ✓ Model initialized on GPU
+110.4s 58 
+110.4s 59 Config: Epochs=100 | Batch=8192 | LR=0.005 (cosine)
+110.4s 60 k=64 | Reg=0.001 | Dropout=0.3 | Patience=20
+110.4s 61 
+110.4s 62 ----------------------------------------------------------------------
+115.1s 63 Epoch   1/100 | Loss:  5.6683 | Val RMSE: 1.4549 ✗ | MAE: 1.2818 | R2: -0.0187 | LR: 0.005000 | 4.6s
+115.1s 64 🎯 New best! RMSE: 1.4549 (Δ: -0.0134)
+116.5s 65 Epoch   2/100 | Loss:  2.0653 | Val RMSE: 1.3657 ✓ | MAE: 1.1586 | R2: 0.1024 | LR: 0.004999 | 1.4s
+116.5s 66 🎯 New best! RMSE: 1.3657 (Δ: +0.0758)
+117.9s 67 Epoch   3/100 | Loss:  1.9596 | Val RMSE: 1.3513 ✓ | MAE: 1.1386 | R2: 0.1212 | LR: 0.004995 | 1.3s
+117.9s 68 🎯 New best! RMSE: 1.3513 (Δ: +0.0902)
+119.3s 69 Epoch   4/100 | Loss:  1.9090 | Val RMSE: 1.3395 ✓ | MAE: 1.1271 | R2: 0.1365 | LR: 0.004989 | 1.3s
+119.3s 70 🎯 New best! RMSE: 1.3395 (Δ: +0.1020)
+120.7s 71 Epoch   5/100 | Loss:  1.8677 | Val RMSE: 1.3289 ✓ | MAE: 1.1174 | R2: 0.1500 | LR: 0.004980 | 1.3s
+120.7s 72 🎯 New best! RMSE: 1.3289 (Δ: +0.1125)
+122.1s 73 Epoch   6/100 | Loss:  1.8310 | Val RMSE: 1.3195 ✓ | MAE: 1.1089 | R2: 0.1621 | LR: 0.004969 | 1.3s
+122.1s 74 🎯 New best! RMSE: 1.3195 (Δ: +0.1220)
+123.5s 75 Epoch   7/100 | Loss:  1.8008 | Val RMSE: 1.3109 ✓ | MAE: 1.1011 | R2: 0.1729 | LR: 0.004956 | 1.4s
+123.5s 76 🎯 New best! RMSE: 1.3109 (Δ: +0.1306)
+124.9s 77 Epoch   8/100 | Loss:  1.7720 | Val RMSE: 1.3031 ✓ | MAE: 1.0938 | R2: 0.1827 | LR: 0.004940 | 1.3s
+124.9s 78 🎯 New best! RMSE: 1.3031 (Δ: +0.1384)
+126.3s 79 Epoch   9/100 | Loss:  1.7476 | Val RMSE: 1.2960 ✓ | MAE: 1.0872 | R2: 0.1917 | LR: 0.004922 | 1.3s
+126.3s 80 🎯 New best! RMSE: 1.2960 (Δ: +0.1455)
+127.6s 81 Epoch  10/100 | Loss:  1.7249 | Val RMSE: 1.2894 ✓ | MAE: 1.0805 | R2: 0.1999 | LR: 0.004901 | 1.3s
+127.6s 82 🎯 New best! RMSE: 1.2894 (Δ: +0.1521)
+129.0s 83 Epoch  11/100 | Loss:  1.7057 | Val RMSE: 1.2833 ✓ | MAE: 1.0750 | R2: 0.2075 | LR: 0.004878 | 1.3s
+129.0s 84 🎯 New best! RMSE: 1.2833 (Δ: +0.1582)
+130.4s 85 Epoch  12/100 | Loss:  1.6862 | Val RMSE: 1.2776 ✓ | MAE: 1.0697 | R2: 0.2145 | LR: 0.004852 | 1.3s
+130.4s 86 🎯 New best! RMSE: 1.2776 (Δ: +0.1639)
+131.8s 87 Epoch  13/100 | Loss:  1.6701 | Val RMSE: 1.2723 ✓ | MAE: 1.0641 | R2: 0.2210 | LR: 0.004825 | 1.3s
+131.8s 88 🎯 New best! RMSE: 1.2723 (Δ: +0.1692)
+133.2s 89 Epoch  14/100 | Loss:  1.6555 | Val RMSE: 1.2672 ✓ | MAE: 1.0595 | R2: 0.2271 | LR: 0.004795 | 1.3s
+133.2s 90 🎯 New best! RMSE: 1.2672 (Δ: +0.1742)
+134.6s 91 Epoch  15/100 | Loss:  1.6414 | Val RMSE: 1.2625 ✓ | MAE: 1.0545 | R2: 0.2329 | LR: 0.004763 | 1.3s
+134.6s 92 🎯 New best! RMSE: 1.2625 (Δ: +0.1789)
+136.0s 93 Epoch  16/100 | Loss:  1.6282 | Val RMSE: 1.2580 ✓ | MAE: 1.0503 | R2: 0.2383 | LR: 0.004728 | 1.3s
+136.0s 94 🎯 New best! RMSE: 1.2580 (Δ: +0.1834)
+137.4s 95 Epoch  17/100 | Loss:  1.6152 | Val RMSE: 1.2538 ✓ | MAE: 1.0462 | R2: 0.2434 | LR: 0.004691 | 1.3s
+137.4s 96 🎯 New best! RMSE: 1.2538 (Δ: +0.1877)
+138.8s 97 Epoch  18/100 | Loss:  1.6040 | Val RMSE: 1.2498 ✓ | MAE: 1.0421 | R2: 0.2483 | LR: 0.004653 | 1.4s
+138.8s 98 🎯 New best! RMSE: 1.2498 (Δ: +0.1917)
+140.2s 99 Epoch  19/100 | Loss:  1.5936 | Val RMSE: 1.2459 ✓ | MAE: 1.0383 | R2: 0.2529 | LR: 0.004612 | 1.3s
+140.2s 100 🎯 New best! RMSE: 1.2459 (Δ: +0.1955)
+141.6s 101 Epoch  20/100 | Loss:  1.5835 | Val RMSE: 1.2422 ✓ | MAE: 1.0345 | R2: 0.2573 | LR: 0.004569 | 1.3s
+141.6s 102 🎯 New best! RMSE: 1.2422 (Δ: +0.1992)
+143.0s 103 Epoch  21/100 | Loss:  1.5736 | Val RMSE: 1.2387 ✓ | MAE: 1.0311 | R2: 0.2615 | LR: 0.004523 | 1.3s
+143.0s 104 🎯 New best! RMSE: 1.2387 (Δ: +0.2027)
+144.4s 105 Epoch  22/100 | Loss:  1.5649 | Val RMSE: 1.2353 ✓ | MAE: 1.0275 | R2: 0.2655 | LR: 0.004476 | 1.3s
+144.4s 106 🎯 New best! RMSE: 1.2353 (Δ: +0.2061)
+145.8s 107 Epoch  23/100 | Loss:  1.5569 | Val RMSE: 1.2321 ✓ | MAE: 1.0243 | R2: 0.2694 | LR: 0.004427 | 1.4s
+145.8s 108 🎯 New best! RMSE: 1.2321 (Δ: +0.2094)
+147.2s 109 Epoch  24/100 | Loss:  1.5479 | Val RMSE: 1.2290 ✓ | MAE: 1.0211 | R2: 0.2731 | LR: 0.004377 | 1.3s
+147.2s 110 🎯 New best! RMSE: 1.2290 (Δ: +0.2125)
+148.6s 111 Epoch  25/100 | Loss:  1.5400 | Val RMSE: 1.2260 ✓ | MAE: 1.0181 | R2: 0.2766 | LR: 0.004324 | 1.3s
+148.6s 112 🎯 New best! RMSE: 1.2260 (Δ: +0.2154)
+149.9s 113 Epoch  26/100 | Loss:  1.5329 | Val RMSE: 1.2231 ✓ | MAE: 1.0150 | R2: 0.2800 | LR: 0.004269 | 1.3s
+149.9s 114 🎯 New best! RMSE: 1.2231 (Δ: +0.2183)
+151.3s 115 Epoch  27/100 | Loss:  1.5248 | Val RMSE: 1.2204 ✓ | MAE: 1.0123 | R2: 0.2832 | LR: 0.004213 | 1.3s
+151.3s 116 🎯 New best! RMSE: 1.2204 (Δ: +0.2211)
+152.7s 117 Epoch  28/100 | Loss:  1.5189 | Val RMSE: 1.2177 ✓ | MAE: 1.0094 | R2: 0.2863 | LR: 0.004155 | 1.3s
+152.7s 118 🎯 New best! RMSE: 1.2177 (Δ: +0.2237)
+154.1s 119 Epoch  29/100 | Loss:  1.5121 | Val RMSE: 1.2152 ✓ | MAE: 1.0066 | R2: 0.2893 | LR: 0.004095 | 1.3s
+154.1s 120 🎯 New best! RMSE: 1.2152 (Δ: +0.2263)
+155.5s 121 Epoch  30/100 | Loss:  1.5053 | Val RMSE: 1.2127 ✓ | MAE: 1.0041 | R2: 0.2922 | LR: 0.004034 | 1.3s
+155.5s 122 🎯 New best! RMSE: 1.2127 (Δ: +0.2288)
+156.9s 123 Epoch  31/100 | Loss:  1.4993 | Val RMSE: 1.2103 ✓ | MAE: 1.0016 | R2: 0.2950 | LR: 0.003972 | 1.3s
+156.9s 124 🎯 New best! RMSE: 1.2103 (Δ: +0.2311)
+158.3s 125 Epoch  32/100 | Loss:  1.4933 | Val RMSE: 1.2080 ✓ | MAE: 0.9993 | R2: 0.2977 | LR: 0.003907 | 1.3s
+158.3s 126 🎯 New best! RMSE: 1.2080 (Δ: +0.2334)
+159.7s 127 Epoch  33/100 | Loss:  1.4885 | Val RMSE: 1.2058 ✓ | MAE: 0.9971 | R2: 0.3002 | LR: 0.003842 | 1.3s
+159.7s 128 🎯 New best! RMSE: 1.2058 (Δ: +0.2356)
+161.1s 129 Epoch  34/100 | Loss:  1.4830 | Val RMSE: 1.2037 ✓ | MAE: 0.9947 | R2: 0.3027 | LR: 0.003775 | 1.3s
+161.1s 130 🎯 New best! RMSE: 1.2037 (Δ: +0.2378)
+162.5s 131 Epoch  35/100 | Loss:  1.4770 | Val RMSE: 1.2017 ✓ | MAE: 0.9927 | R2: 0.3050 | LR: 0.003707 | 1.3s
+162.5s 132 🎯 New best! RMSE: 1.2017 (Δ: +0.2398)
+163.9s 133 Epoch  36/100 | Loss:  1.4731 | Val RMSE: 1.1997 ✓ | MAE: 0.9908 | R2: 0.3073 | LR: 0.003638 | 1.3s
+163.9s 134 🎯 New best! RMSE: 1.1997 (Δ: +0.2418)
+165.3s 135 Epoch  37/100 | Loss:  1.4672 | Val RMSE: 1.1978 ✓ | MAE: 0.9885 | R2: 0.3095 | LR: 0.003567 | 1.3s
+165.3s 136 🎯 New best! RMSE: 1.1978 (Δ: +0.2437)
+166.6s 137 Epoch  38/100 | Loss:  1.4634 | Val RMSE: 1.1960 ✓ | MAE: 0.9865 | R2: 0.3116 | LR: 0.003496 | 1.3s
+166.6s 138 🎯 New best! RMSE: 1.1960 (Δ: +0.2455)
+168.0s 139 Epoch  39/100 | Loss:  1.4589 | Val RMSE: 1.1942 ✓ | MAE: 0.9846 | R2: 0.3136 | LR: 0.003423 | 1.3s
+168.0s 140 🎯 New best! RMSE: 1.1942 (Δ: +0.2473)
+169.4s 141 Epoch  40/100 | Loss:  1.4546 | Val RMSE: 1.1925 ✓ | MAE: 0.9829 | R2: 0.3156 | LR: 0.003350 | 1.3s
+169.4s 142 🎯 New best! RMSE: 1.1925 (Δ: +0.2489)
+170.8s 143 Epoch  41/100 | Loss:  1.4510 | Val RMSE: 1.1909 ✓ | MAE: 0.9810 | R2: 0.3174 | LR: 0.003276 | 1.3s
+170.8s 144 🎯 New best! RMSE: 1.1909 (Δ: +0.2506)
+172.2s 145 Epoch  42/100 | Loss:  1.4470 | Val RMSE: 1.1893 ✓ | MAE: 0.9794 | R2: 0.3192 | LR: 0.003201 | 1.4s
+172.2s 146 🎯 New best! RMSE: 1.1893 (Δ: +0.2521)
+173.6s 147 Epoch  43/100 | Loss:  1.4432 | Val RMSE: 1.1878 ✓ | MAE: 0.9777 | R2: 0.3210 | LR: 0.003125 | 1.3s
+173.6s 148 🎯 New best! RMSE: 1.1878 (Δ: +0.2536)
+175.0s 149 Epoch  44/100 | Loss:  1.4392 | Val RMSE: 1.1864 ✓ | MAE: 0.9761 | R2: 0.3226 | LR: 0.003049 | 1.3s
+175.0s 150 🎯 New best! RMSE: 1.1864 (Δ: +0.2551)
+176.4s 151 Epoch  45/100 | Loss:  1.4347 | Val RMSE: 1.1850 ✓ | MAE: 0.9746 | R2: 0.3242 | LR: 0.002973 | 1.3s
+176.4s 152 🎯 New best! RMSE: 1.1850 (Δ: +0.2565)
+177.8s 153 Epoch  46/100 | Loss:  1.4321 | Val RMSE: 1.1836 ✓ | MAE: 0.9732 | R2: 0.3257 | LR: 0.002895 | 1.3s
+177.8s 154 🎯 New best! RMSE: 1.1836 (Δ: +0.2578)
+179.1s 155 Epoch  47/100 | Loss:  1.4298 | Val RMSE: 1.1824 ✓ | MAE: 0.9717 | R2: 0.3272 | LR: 0.002818 | 1.3s
+179.1s 156 🎯 New best! RMSE: 1.1824 (Δ: +0.2591)
+180.5s 157 Epoch  48/100 | Loss:  1.4251 | Val RMSE: 1.1811 ✓ | MAE: 0.9704 | R2: 0.3286 | LR: 0.002740 | 1.3s
+180.5s 158 🎯 New best! RMSE: 1.1811 (Δ: +0.2603)
+181.9s 159 Epoch  49/100 | Loss:  1.4224 | Val RMSE: 1.1799 ✓ | MAE: 0.9692 | R2: 0.3299 | LR: 0.002662 | 1.3s
+181.9s 160 🎯 New best! RMSE: 1.1799 (Δ: +0.2615)
+183.3s 161 Epoch  50/100 | Loss:  1.4201 | Val RMSE: 1.1788 ✓ | MAE: 0.9679 | R2: 0.3312 | LR: 0.002583 | 1.3s
+183.3s 162 🎯 New best! RMSE: 1.1788 (Δ: +0.2626)
+184.7s 163 Epoch  51/100 | Loss:  1.4174 | Val RMSE: 1.1777 ✓ | MAE: 0.9666 | R2: 0.3324 | LR: 0.002505 | 1.3s
+184.7s 164 🎯 New best! RMSE: 1.1777 (Δ: +0.2637)
+186.1s 165 Epoch  52/100 | Loss:  1.4152 | Val RMSE: 1.1767 ✓ | MAE: 0.9655 | R2: 0.3336 | LR: 0.002427 | 1.3s
+186.1s 166 🎯 New best! RMSE: 1.1767 (Δ: +0.2648)
+187.4s 167 Epoch  53/100 | Loss:  1.4121 | Val RMSE: 1.1757 ✓ | MAE: 0.9643 | R2: 0.3347 | LR: 0.002348 | 1.3s
+187.4s 168 🎯 New best! RMSE: 1.1757 (Δ: +0.2658)
+188.8s 169 Epoch  54/100 | Loss:  1.4103 | Val RMSE: 1.1747 ✓ | MAE: 0.9633 | R2: 0.3358 | LR: 0.002270 | 1.3s
+188.8s 170 🎯 New best! RMSE: 1.1747 (Δ: +0.2667)
+190.2s 171 Epoch  55/100 | Loss:  1.4075 | Val RMSE: 1.1738 ✓ | MAE: 0.9623 | R2: 0.3368 | LR: 0.002192 | 1.3s
+190.2s 172 🎯 New best! RMSE: 1.1738 (Δ: +0.2676)
+191.6s 173 Epoch  56/100 | Loss:  1.4058 | Val RMSE: 1.1730 ✓ | MAE: 0.9612 | R2: 0.3378 | LR: 0.002115 | 1.3s
+191.6s 174 🎯 New best! RMSE: 1.1730 (Δ: +0.2685)
+193.0s 175 Epoch  57/100 | Loss:  1.4037 | Val RMSE: 1.1721 ✓ | MAE: 0.9603 | R2: 0.3388 | LR: 0.002037 | 1.3s
+193.0s 176 🎯 New best! RMSE: 1.1721 (Δ: +0.2693)
+194.4s 177 Epoch  58/100 | Loss:  1.4021 | Val RMSE: 1.1714 ✓ | MAE: 0.9593 | R2: 0.3397 | LR: 0.001961 | 1.3s
+194.4s 178 🎯 New best! RMSE: 1.1714 (Δ: +0.2701)
+195.8s 179 Epoch  59/100 | Loss:  1.3998 | Val RMSE: 1.1706 ✓ | MAE: 0.9586 | R2: 0.3405 | LR: 0.001885 | 1.3s
+195.8s 180 🎯 New best! RMSE: 1.1706 (Δ: +0.2709)
+197.1s 181 Epoch  60/100 | Loss:  1.3979 | Val RMSE: 1.1699 ✓ | MAE: 0.9578 | R2: 0.3413 | LR: 0.001809 | 1.3s
+197.1s 182 🎯 New best! RMSE: 1.1699 (Δ: +0.2716)
+198.5s 183 Epoch  61/100 | Loss:  1.3961 | Val RMSE: 1.1692 ✓ | MAE: 0.9570 | R2: 0.3421 | LR: 0.001734 | 1.3s
+198.5s 184 🎯 New best! RMSE: 1.1692 (Δ: +0.2723)
+199.9s 185 Epoch  62/100 | Loss:  1.3948 | Val RMSE: 1.1686 ✓ | MAE: 0.9563 | R2: 0.3428 | LR: 0.001660 | 1.3s
+199.9s 186 🎯 New best! RMSE: 1.1686 (Δ: +0.2729)
+201.3s 187 Epoch  63/100 | Loss:  1.3936 | Val RMSE: 1.1679 ✓ | MAE: 0.9556 | R2: 0.3435 | LR: 0.001587 | 1.3s
+201.3s 188 🎯 New best! RMSE: 1.1679 (Δ: +0.2735)
+202.7s 189 Epoch  64/100 | Loss:  1.3912 | Val RMSE: 1.1674 ✓ | MAE: 0.9550 | R2: 0.3441 | LR: 0.001514 | 1.3s
+202.7s 190 🎯 New best! RMSE: 1.1674 (Δ: +0.2741)
+204.1s 191 Epoch  65/100 | Loss:  1.3907 | Val RMSE: 1.1668 ✓ | MAE: 0.9544 | R2: 0.3448 | LR: 0.001443 | 1.3s
+204.1s 192 🎯 New best! RMSE: 1.1668 (Δ: +0.2746)
+205.5s 193 Epoch  66/100 | Loss:  1.3898 | Val RMSE: 1.1663 ✓ | MAE: 0.9538 | R2: 0.3453 | LR: 0.001372 | 1.3s
+205.5s 194 🎯 New best! RMSE: 1.1663 (Δ: +0.2752)
+206.9s 195 Epoch  67/100 | Loss:  1.3882 | Val RMSE: 1.1658 ✓ | MAE: 0.9532 | R2: 0.3459 | LR: 0.001303 | 1.3s
+206.9s 196 🎯 New best! RMSE: 1.1658 (Δ: +0.2757)
+208.2s 197 Epoch  68/100 | Loss:  1.3877 | Val RMSE: 1.1653 ✓ | MAE: 0.9526 | R2: 0.3464 | LR: 0.001235 | 1.3s
+208.2s 198 🎯 New best! RMSE: 1.1653 (Δ: +0.2761)
+209.6s 199 Epoch  69/100 | Loss:  1.3854 | Val RMSE: 1.1649 ✓ | MAE: 0.9521 | R2: 0.3469 | LR: 0.001168 | 1.3s
+209.6s 200 🎯 New best! RMSE: 1.1649 (Δ: +0.2766)
+211.0s 201 Epoch  70/100 | Loss:  1.3846 | Val RMSE: 1.1645 ✓ | MAE: 0.9516 | R2: 0.3474 | LR: 0.001103 | 1.3s
+211.0s 202 🎯 New best! RMSE: 1.1645 (Δ: +0.2770)
+212.4s 203 Epoch  71/100 | Loss:  1.3837 | Val RMSE: 1.1641 ✓ | MAE: 0.9512 | R2: 0.3478 | LR: 0.001038 | 1.3s
+212.4s 204 🎯 New best! RMSE: 1.1641 (Δ: +0.2773)
+213.8s 205 Epoch  72/100 | Loss:  1.3832 | Val RMSE: 1.1638 ✓ | MAE: 0.9508 | R2: 0.3482 | LR: 0.000976 | 1.3s
+213.8s 206 🎯 New best! RMSE: 1.1638 (Δ: +0.2777)
+215.2s 207 Epoch  73/100 | Loss:  1.3820 | Val RMSE: 1.1634 ✓ | MAE: 0.9504 | R2: 0.3486 | LR: 0.000915 | 1.3s
+215.2s 208 🎯 New best! RMSE: 1.1634 (Δ: +0.2780)
+216.6s 209 Epoch  74/100 | Loss:  1.3819 | Val RMSE: 1.1631 ✓ | MAE: 0.9500 | R2: 0.3489 | LR: 0.000855 | 1.3s
+216.6s 210 🎯 New best! RMSE: 1.1631 (Δ: +0.2783)
+218.0s 211 Epoch  75/100 | Loss:  1.3808 | Val RMSE: 1.1628 ✓ | MAE: 0.9496 | R2: 0.3492 | LR: 0.000797 | 1.3s
+218.0s 212 🎯 New best! RMSE: 1.1628 (Δ: +0.2786)
+219.4s 213 Epoch  76/100 | Loss:  1.3792 | Val RMSE: 1.1626 ✓ | MAE: 0.9493 | R2: 0.3495 | LR: 0.000741 | 1.3s
+219.4s 214 🎯 New best! RMSE: 1.1626 (Δ: +0.2789)
+220.8s 215 Epoch  77/100 | Loss:  1.3791 | Val RMSE: 1.1623 ✓ | MAE: 0.9491 | R2: 0.3498 | LR: 0.000686 | 1.3s
+220.8s 216 🎯 New best! RMSE: 1.1623 (Δ: +0.2792)
+222.2s 217 Epoch  78/100 | Loss:  1.3786 | Val RMSE: 1.1621 ✓ | MAE: 0.9488 | R2: 0.3501 | LR: 0.000633 | 1.4s
+222.2s 218 🎯 New best! RMSE: 1.1621 (Δ: +0.2794)
+223.6s 219 Epoch  79/100 | Loss:  1.3783 | Val RMSE: 1.1619 ✓ | MAE: 0.9485 | R2: 0.3503 | LR: 0.000583 | 1.3s
+223.6s 220 🎯 New best! RMSE: 1.1619 (Δ: +0.2796)
+225.0s 221 Epoch  80/100 | Loss:  1.3773 | Val RMSE: 1.1617 ✓ | MAE: 0.9483 | R2: 0.3505 | LR: 0.000534 | 1.3s
+225.0s 222 🎯 New best! RMSE: 1.1617 (Δ: +0.2798)
+226.3s 223 Epoch  81/100 | Loss:  1.3769 | Val RMSE: 1.1615 ✓ | MAE: 0.9481 | R2: 0.3507 | LR: 0.000487 | 1.3s
+226.3s 224 🎯 New best! RMSE: 1.1615 (Δ: +0.2800)
+227.7s 225 Epoch  82/100 | Loss:  1.3766 | Val RMSE: 1.1614 ✓ | MAE: 0.9479 | R2: 0.3509 | LR: 0.000441 | 1.3s
+227.7s 226 🎯 New best! RMSE: 1.1614 (Δ: +0.2801)
+229.1s 227 Epoch  83/100 | Loss:  1.3765 | Val RMSE: 1.1612 ✓ | MAE: 0.9478 | R2: 0.3510 | LR: 0.000398 | 1.3s
+229.1s 228 🎯 New best! RMSE: 1.1612 (Δ: +0.2802)
+230.5s 229 Epoch  84/100 | Loss:  1.3760 | Val RMSE: 1.1611 ✓ | MAE: 0.9476 | R2: 0.3512 | LR: 0.000357 | 1.3s
+230.5s 230 🎯 New best! RMSE: 1.1611 (Δ: +0.2804)
+231.9s 231 Epoch  85/100 | Loss:  1.3754 | Val RMSE: 1.1610 ✓ | MAE: 0.9475 | R2: 0.3513 | LR: 0.000319 | 1.3s
+231.9s 232 🎯 New best! RMSE: 1.1610 (Δ: +0.2805)
+233.3s 233 Epoch  86/100 | Loss:  1.3760 | Val RMSE: 1.1609 ✓ | MAE: 0.9474 | R2: 0.3514 | LR: 0.000282 | 1.4s
+233.3s 234 🎯 New best! RMSE: 1.1609 (Δ: +0.2806)
+234.7s 235 Epoch  87/100 | Loss:  1.3753 | Val RMSE: 1.1608 ✓ | MAE: 0.9473 | R2: 0.3515 | LR: 0.000247 | 1.3s
+234.7s 236 🎯 New best! RMSE: 1.1608 (Δ: +0.2807)
+236.1s 237 Epoch  88/100 | Loss:  1.3755 | Val RMSE: 1.1607 ✓ | MAE: 0.9472 | R2: 0.3516 | LR: 0.000215 | 1.3s
+236.1s 238 🎯 New best! RMSE: 1.1607 (Δ: +0.2808)
+237.5s 239 Epoch  89/100 | Loss:  1.3741 | Val RMSE: 1.1606 ✓ | MAE: 0.9471 | R2: 0.3517 | LR: 0.000185 | 1.3s
+237.5s 240 🎯 New best! RMSE: 1.1606 (Δ: +0.2808)
+238.9s 241 Epoch  90/100 | Loss:  1.3754 | Val RMSE: 1.1606 ✓ | MAE: 0.9470 | R2: 0.3517 | LR: 0.000158 | 1.3s
+238.9s 242 🎯 New best! RMSE: 1.1606 (Δ: +0.2809)
+240.2s 243 Epoch  91/100 | Loss:  1.3745 | Val RMSE: 1.1605 ✓ | MAE: 0.9470 | R2: 0.3518 | LR: 0.000132 | 1.3s
+240.2s 244 🎯 New best! RMSE: 1.1605 (Δ: +0.2809)
+241.6s 245 Epoch  92/100 | Loss:  1.3754 | Val RMSE: 1.1605 ✓ | MAE: 0.9469 | R2: 0.3518 | LR: 0.000109 | 1.3s
+241.6s 246 🎯 New best! RMSE: 1.1605 (Δ: +0.2810)
+243.0s 247 Epoch  93/100 | Loss:  1.3744 | Val RMSE: 1.1605 ✓ | MAE: 0.9469 | R2: 0.3519 | LR: 0.000088 | 1.3s
+243.0s 248 🎯 New best! RMSE: 1.1605 (Δ: +0.2810)
+244.4s 249 Epoch  94/100 | Loss:  1.3749 | Val RMSE: 1.1604 ✓ | MAE: 0.9469 | R2: 0.3519 | LR: 0.000070 | 1.3s
+244.4s 250 🎯 New best! RMSE: 1.1604 (Δ: +0.2810)
+245.8s 251 Epoch  95/100 | Loss:  1.3743 | Val RMSE: 1.1604 ✓ | MAE: 0.9469 | R2: 0.3519 | LR: 0.000054 | 1.3s
+245.8s 252 🎯 New best! RMSE: 1.1604 (Δ: +0.2810)
+247.2s 253 Epoch  96/100 | Loss:  1.3752 | Val RMSE: 1.1604 ✓ | MAE: 0.9468 | R2: 0.3519 | LR: 0.000041 | 1.3s
+247.2s 254 🎯 New best! RMSE: 1.1604 (Δ: +0.2810)
+248.5s 255 Epoch  97/100 | Loss:  1.3745 | Val RMSE: 1.1604 ✓ | MAE: 0.9468 | R2: 0.3519 | LR: 0.000030 | 1.3s
+248.5s 256 🎯 New best! RMSE: 1.1604 (Δ: +0.2811)
+249.9s 257 Epoch  98/100 | Loss:  1.3746 | Val RMSE: 1.1604 ✓ | MAE: 0.9468 | R2: 0.3519 | LR: 0.000021 | 1.3s
+249.9s 258 🎯 New best! RMSE: 1.1604 (Δ: +0.2811)
+251.3s 259 Epoch  99/100 | Loss:  1.3743 | Val RMSE: 1.1604 ✓ | MAE: 0.9468 | R2: 0.3520 | LR: 0.000015 | 1.3s
+251.3s 260 🎯 New best! RMSE: 1.1604 (Δ: +0.2811)
+252.7s 261 Epoch 100/100 | Loss:  1.3744 | Val RMSE: 1.1604 ✓ | MAE: 0.9468 | R2: 0.3520 | LR: 0.000011 | 1.3s
+252.7s 262 🎯 New best! RMSE: 1.1604 (Δ: +0.2811)
+252.7s 263 
+252.7s 264 ======================================================================
+252.7s 265 FINAL EVALUATION
+252.7s 266 ======================================================================
+253.0s 267 
+253.0s 268 📊 Baseline RMSE: 1.4415
+253.0s 269 
+253.0s 270 📈 Training Set:
+253.0s 271 MSE: 1.3478 | RMSE: 1.1609 | MAE: 0.9464 | R2: 0.3501
+253.0s 272 
+253.0s 273 📈 Validation Set:
+253.0s 274 MSE: 1.3465 | RMSE: 1.1604 | MAE: 0.9468 | R2: 0.3520
+253.0s 275 
+253.0s 276 ✓ Improvement: +0.2811
+253.0s 277 📉 Overfitting gap: 0.0006
+253.0s 278 ✓ Good generalization!
+253.0s 279 
+253.0s 280 ✓ Training completed!
+253.1s 281 ✓ Model saved to /kaggle/working/models/fm_chi2_selected.npz
+253.1s 282 ✓ Training history saved
+258.4s 283 /usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+258.4s 284 cells[i][c] = re.sub('\\\\\|', '|', cell)
+258.6s 285 /usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+258.6s 286 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+259.2s 287 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+259.5s 288 [NbConvertApp] Writing 51729 bytes to __notebook__.ipynb
+261.8s 289 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+262.8s 290 [NbConvertApp] Writing 417692 bytes to __results__.html
