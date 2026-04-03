@@ -1,0 +1,179 @@
+11.7s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+11.7s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+11.7s 3 0.00s - to python to disable frozen modules.
+11.7s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+12.6s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+12.6s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+12.6s 7 0.00s - to python to disable frozen modules.
+12.6s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+19.1s 9 ======================================================================
+19.1s 10 MUTUAL INFORMATION FEATURE ANALYSIS — Yelp Dataset
+19.1s 11 ======================================================================
+19.1s 12 
+19.1s 13 Bước 1: Build city map
+22.1s 14 ✓ City map: top 50 cities (Other=0)
+22.1s 15 
+22.1s 16 Bước 2: Load contexts
+142.9s 17 ✓ Users: 1,987,897
+146.2s 18 ✓ Businesses: 150,346
+153.3s 19 ✓ Checkin: 131,930 businesses
+160.9s 20 ✓ Tips: 301,758 users, 106,193 businesses
+160.9s 21 
+160.9s 22 Bước 3: Extract features
+160.9s 23 
+160.9s 24 Extracting features from reviews...
+164.7s 25 Loaded 100,000 reviews...
+168.5s 26 Loaded 200,000 reviews...
+172.3s 27 Loaded 300,000 reviews...
+176.0s 28 Loaded 400,000 reviews...
+179.8s 29 Loaded 500,000 reviews...
+179.8s 30 ✓ Total: 500,000 reviews | Shape: (500000, 33)
+179.8s 31 
+179.8s 32 Bước 4: Mutual Information
+179.8s 33 
+179.8s 34 Running Mutual Information (n_samples=500,000)...
+179.8s 35 (Có thể mất 2-5 phút tùy số lượng reviews)
+543.8s 36 
+543.8s 37 ======================================================================
+543.8s 38 MUTUAL INFORMATION — 33 Features
+543.8s 39 ======================================================================
+543.8s 40 
+543.8s 41 Rank  Feature                     MI Score  Bar                            Đánh giá
+543.8s 42 --------------------------------------------------------------------------------
+543.8s 43 1     user_avg_stars                0.2155  ██████████████████████████████ 🔥 Cao
+543.8s 44 2     biz_stars                     0.1259  ██████████████████████████████ 🔥 Cao
+543.8s 45 3     btip_avg_len                  0.0937  ████████████████████████████   🔥 Cao
+543.8s 46 4     user_review_count             0.0637  ███████████████████            🔥 Cao
+543.8s 47 5     checkin_count                 0.0596  █████████████████              🔥 Cao
+543.8s 48 6     user_cool                     0.0586  █████████████████              🔥 Cao
+543.8s 49 7     user_useful                   0.0531  ███████████████                🔥 Cao
+543.8s 50 8     user_compliments              0.0525  ███████████████                🔥 Cao
+543.8s 51 9     user_funny                    0.0486  ██████████████                 ⚠  TB
+543.8s 52 10    user_fans                     0.0463  █████████████                  ⚠  TB
+543.8s 53 11    biz_review_count              0.0431  ████████████                   ⚠  TB
+543.8s 54 12    user_elite                    0.0354  ██████████                     ⚠  TB
+543.8s 55 13    btip_count                    0.0336  ██████████                     ⚠  TB
+543.8s 56 14    utip_avg_len                  0.0271  ████████                       ⚠  TB
+543.8s 57 15    user_friends                  0.0253  ███████                        ⚠  TB
+543.8s 58 16    biz_total_hours               0.0251  ███████                        ⚠  TB
+543.8s 59 17    review_text_len               0.0248  ███████                        ⚠  TB
+543.8s 60 18    biz_price_range               0.0228  ██████                         ⚠  TB
+543.8s 61 19    year                          0.0228  ██████                         ⚠  TB
+543.8s 62 20    biz_open_days                 0.0213  ██████                         ⚠  TB
+543.8s 63 21    biz_is_open                   0.0207  ██████                         ⚠  TB
+543.8s 64 22    user_years_active             0.0190  █████                          ⚠  TB
+543.8s 65 23    btip_avg_comp                 0.0182  █████                          ⚠  TB
+543.8s 66 24    utip_count                    0.0167  █████                          ⚠  TB
+543.8s 67 25    review_cool                   0.0122  ███                            ⚠  TB
+543.8s 68 26    biz_city                      0.0095  ██                             ❌ Thấp
+543.8s 69 27    review_useful                 0.0090  ██                             ❌ Thấp
+543.8s 70 28    review_funny                  0.0080  ██                             ❌ Thấp
+543.8s 71 29    utip_avg_comp                 0.0079  ██                             ❌ Thấp
+543.8s 72 30    biz_cat_count                 0.0037  █                              ❌ Thấp
+543.8s 73 31    weekday                       0.0033                                 ❌ Thấp
+543.8s 74 32    hour                          0.0016                                 ❌ Thấp
+543.8s 75 33    month                         0.0009                                 ❌ Thấp
+543.8s 76 
+543.8s 77 ======================================================================
+543.8s 78 PHÂN NHÓM THEO MI SCORE
+543.8s 79 ======================================================================
+543.8s 80 
+543.8s 81 🔥 Cao (MI > 0.05) — 8 features:
+543.8s 82 + user_avg_stars            0.2155
+543.8s 83 + biz_stars                 0.1259
+543.8s 84 + btip_avg_len              0.0937
+543.8s 85 + user_review_count         0.0637
+543.8s 86 + checkin_count             0.0596
+543.8s 87 + user_cool                 0.0586
+543.8s 88 + user_useful               0.0531
+543.8s 89 + user_compliments          0.0525
+543.8s 90 
+543.8s 91 ⚠  Trung bình (0.01 < MI ≤ 0.05) — 17 features:
+543.8s 92 ~ user_funny                0.0486
+543.8s 93 ~ user_fans                 0.0463
+543.8s 94 ~ biz_review_count          0.0431
+543.8s 95 ~ user_elite                0.0354
+543.8s 96 ~ btip_count                0.0336
+543.8s 97 ~ utip_avg_len              0.0271
+543.8s 98 ~ user_friends              0.0253
+543.8s 99 ~ biz_total_hours           0.0251
+543.8s 100 ~ review_text_len           0.0248
+543.8s 101 ~ biz_price_range           0.0228
+543.8s 102 ~ year                      0.0228
+543.8s 103 ~ biz_open_days             0.0213
+543.8s 104 ~ biz_is_open               0.0207
+543.8s 105 ~ user_years_active         0.0190
+543.8s 106 ~ btip_avg_comp             0.0182
+543.8s 107 ~ utip_count                0.0167
+543.8s 108 ~ review_cool               0.0122
+543.8s 109 
+543.8s 110 ❌ Thấp (MI ≤ 0.01) — 8 features:
+543.8s 111 - biz_city                  0.0095
+543.8s 112 - review_useful             0.0090
+543.8s 113 - review_funny              0.0080
+543.8s 114 - utip_avg_comp             0.0079
+543.8s 115 - biz_cat_count             0.0037
+543.8s 116 - weekday                   0.0033
+543.8s 117 - hour                      0.0016
+543.8s 118 - month                     0.0009
+543.8s 119 
+543.8s 120 ======================================================================
+543.8s 121 GỢI Ý (threshold = 0.01)
+543.8s 122 ======================================================================
+543.8s 123 
+543.8s 124 ✅ Giữ lại (25 features):
+543.8s 125 + user_avg_stars            MI=0.2155
+543.8s 126 + biz_stars                 MI=0.1259
+543.8s 127 + btip_avg_len              MI=0.0937
+543.8s 128 + user_review_count         MI=0.0637
+543.8s 129 + checkin_count             MI=0.0596
+543.8s 130 + user_cool                 MI=0.0586
+543.8s 131 + user_useful               MI=0.0531
+543.8s 132 + user_compliments          MI=0.0525
+543.8s 133 + user_funny                MI=0.0486
+543.8s 134 + user_fans                 MI=0.0463
+543.8s 135 + biz_review_count          MI=0.0431
+543.8s 136 + user_elite                MI=0.0354
+543.8s 137 + btip_count                MI=0.0336
+543.8s 138 + utip_avg_len              MI=0.0271
+543.8s 139 + user_friends              MI=0.0253
+543.8s 140 + biz_total_hours           MI=0.0251
+543.8s 141 + review_text_len           MI=0.0248
+543.8s 142 + biz_price_range           MI=0.0228
+543.8s 143 + year                      MI=0.0228
+543.8s 144 + biz_open_days             MI=0.0213
+543.8s 145 + biz_is_open               MI=0.0207
+543.8s 146 + user_years_active         MI=0.0190
+543.8s 147 + btip_avg_comp             MI=0.0182
+543.8s 148 + utip_count                MI=0.0167
+543.8s 149 + review_cool               MI=0.0122
+543.8s 150 
+543.8s 151 ❌ Xem xét bỏ (8 features):
+543.8s 152 - biz_city                  MI=0.0095
+543.8s 153 - review_useful             MI=0.0090
+543.8s 154 - review_funny              MI=0.0080
+543.8s 155 - utip_avg_comp             MI=0.0079
+543.8s 156 - biz_cat_count             MI=0.0037
+543.8s 157 - weekday                   MI=0.0033
+543.8s 158 - hour                      MI=0.0016
+543.8s 159 - month                     MI=0.0009
+543.8s 160 
+543.8s 161 (Chưa có Permutation Importance — chạy sau khi train)
+543.8s 162 
+543.8s 163 ✓ Saved to /kaggle/working/mi_feature_selection.json
+543.8s 164 
+543.8s 165 ======================================================================
+543.8s 166 XONG! Các bước tiếp theo:
+543.8s 167 1. Xem file /kaggle/working/mi_feature_selection.json
+543.8s 168 2. Train FM với fm_pytorch.py hoặc fm_cupy.py
+543.8s 169 3. Copy perm_results từ output train vào compare_with_permutation()
+543.8s 170 4. So sánh MI vs Permutation để kết luận cho luận văn
+543.8s 171 ======================================================================
+549.3s 172 /usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+549.3s 173 cells[i][c] = re.sub('\\\\\|', '|', cell)
+549.6s 174 /usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+549.6s 175 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+550.5s 176 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+550.9s 177 [NbConvertApp] Writing 32302 bytes to __notebook__.ipynb
+554.2s 178 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+555.4s 179 [NbConvertApp] Writing 367463 bytes to __results__.html

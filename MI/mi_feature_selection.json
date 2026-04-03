@@ -1,0 +1,179 @@
+{
+  "config": {
+    "max_reviews": 500000,
+    "threshold": 0.01,
+    "top_city": 50,
+    "num_features": 33
+  },
+  "mi_scores": [
+    {
+      "feature": "user_avg_stars",
+      "mi_score": 0.21545540732765112
+    },
+    {
+      "feature": "biz_stars",
+      "mi_score": 0.1258769842159584
+    },
+    {
+      "feature": "btip_avg_len",
+      "mi_score": 0.09370305627201958
+    },
+    {
+      "feature": "user_review_count",
+      "mi_score": 0.06368658806825067
+    },
+    {
+      "feature": "checkin_count",
+      "mi_score": 0.05959616569223414
+    },
+    {
+      "feature": "user_cool",
+      "mi_score": 0.05858623883077918
+    },
+    {
+      "feature": "user_useful",
+      "mi_score": 0.05307608701979305
+    },
+    {
+      "feature": "user_compliments",
+      "mi_score": 0.052506274997961455
+    },
+    {
+      "feature": "user_funny",
+      "mi_score": 0.04857726325062828
+    },
+    {
+      "feature": "user_fans",
+      "mi_score": 0.04631733558132112
+    },
+    {
+      "feature": "biz_review_count",
+      "mi_score": 0.043083485532752874
+    },
+    {
+      "feature": "user_elite",
+      "mi_score": 0.035390545989356426
+    },
+    {
+      "feature": "btip_count",
+      "mi_score": 0.03360372225403552
+    },
+    {
+      "feature": "utip_avg_len",
+      "mi_score": 0.027075490228229526
+    },
+    {
+      "feature": "user_friends",
+      "mi_score": 0.02525837601480241
+    },
+    {
+      "feature": "biz_total_hours",
+      "mi_score": 0.025098565405311746
+    },
+    {
+      "feature": "review_text_len",
+      "mi_score": 0.024752385618080908
+    },
+    {
+      "feature": "biz_price_range",
+      "mi_score": 0.022819682846098033
+    },
+    {
+      "feature": "year",
+      "mi_score": 0.022771723048558457
+    },
+    {
+      "feature": "biz_open_days",
+      "mi_score": 0.02131855777530056
+    },
+    {
+      "feature": "biz_is_open",
+      "mi_score": 0.02072105339685315
+    },
+    {
+      "feature": "user_years_active",
+      "mi_score": 0.018992401383375324
+    },
+    {
+      "feature": "btip_avg_comp",
+      "mi_score": 0.0182463820666392
+    },
+    {
+      "feature": "utip_count",
+      "mi_score": 0.01669428804278894
+    },
+    {
+      "feature": "review_cool",
+      "mi_score": 0.012201307348197687
+    },
+    {
+      "feature": "biz_city",
+      "mi_score": 0.0095215399104287
+    },
+    {
+      "feature": "review_useful",
+      "mi_score": 0.009007365331981987
+    },
+    {
+      "feature": "review_funny",
+      "mi_score": 0.007975072328600064
+    },
+    {
+      "feature": "utip_avg_comp",
+      "mi_score": 0.007921359446214638
+    },
+    {
+      "feature": "biz_cat_count",
+      "mi_score": 0.0036967969351557883
+    },
+    {
+      "feature": "weekday",
+      "mi_score": 0.003296696644822461
+    },
+    {
+      "feature": "hour",
+      "mi_score": 0.001605107159022623
+    },
+    {
+      "feature": "month",
+      "mi_score": 0.0008982575544127513
+    }
+  ],
+  "kept_features": [
+    "user_avg_stars",
+    "biz_stars",
+    "btip_avg_len",
+    "user_review_count",
+    "checkin_count",
+    "user_cool",
+    "user_useful",
+    "user_compliments",
+    "user_funny",
+    "user_fans",
+    "biz_review_count",
+    "user_elite",
+    "btip_count",
+    "utip_avg_len",
+    "user_friends",
+    "biz_total_hours",
+    "review_text_len",
+    "biz_price_range",
+    "year",
+    "biz_open_days",
+    "biz_is_open",
+    "user_years_active",
+    "btip_avg_comp",
+    "utip_count",
+    "review_cool"
+  ],
+  "dropped_features": [
+    "biz_city",
+    "review_useful",
+    "review_funny",
+    "utip_avg_comp",
+    "biz_cat_count",
+    "weekday",
+    "hour",
+    "month"
+  ]
+}
