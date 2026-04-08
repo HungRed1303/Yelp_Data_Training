@@ -1,0 +1,293 @@
+11.4s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+11.4s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+11.4s 3 0.00s - to python to disable frozen modules.
+11.4s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+12.2s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+12.2s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+12.2s 7 0.00s - to python to disable frozen modules.
+12.2s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+21.2s 9 NUM_DIM = 32  (bỏ utip_avg_comp)
+21.2s 10 Loading contexts...
+25.1s 11 ✓ Built city map: top 50 cities (Other=0)
+160.7s 12 ✓ Users: 1,987,897
+163.7s 13 ✓ Businesses: 150,346
+170.5s 14 ✓ Tips: 301,758 users, 106,193 businesses
+178.8s 15 ✓ Checkin: 131,930 businesses
+178.8s 16 Using device: cuda
+178.8s 17 NUM_DIM = 32
+178.8s 18 Loading data into memory...
+599.0s 19 Train:5,592,224 | Val:699,028 | Test:699,028
+599.0s 20 Users:1,987,929 | Businesses:150,346
+603.8s 21 Parameters: 276,099,668
+610.2s 22 
+610.2s 23 Scheduler: CosineAnnealingWarmRestarts
+610.2s 24 T_0=20 | T_mult=2 | eta_min=1e-05
+610.2s 25 Chu kỳ: 20 → 40 → 80 epochs
+610.2s 26 Early stopping: patience=40 | min_delta=1e-06
+903.0s 27 Epoch   1/120 | Loss:1.0862 | LR:0.009939
+903.0s 28 Val -> MSE:1.0592 | RMSE:1.0292 | MAE:0.7730 | R2:0.5160
+903.0s 29 >> New best RMSE: 1.0292
+1194.0s 30 Epoch   2/120 | Loss:1.0784 | LR:0.009756
+1194.0s 31 Val -> MSE:1.0560 | RMSE:1.0276 | MAE:0.7703 | R2:0.5175
+1194.0s 32 >> New best RMSE: 1.0276
+1484.7s 33 Epoch   3/120 | Loss:1.0754 | LR:0.009456
+1484.7s 34 Val -> MSE:1.0557 | RMSE:1.0275 | MAE:0.7702 | R2:0.5176
+1484.7s 35 >> New best RMSE: 1.0275
+1775.7s 36 Epoch   4/120 | Loss:1.0724 | LR:0.009046
+1775.7s 37 Val -> MSE:1.0537 | RMSE:1.0265 | MAE:0.7697 | R2:0.5186
+1775.7s 38 >> New best RMSE: 1.0265
+2066.9s 39 Epoch   5/120 | Loss:1.0696 | LR:0.008537
+2066.9s 40 Val -> MSE:1.0505 | RMSE:1.0249 | MAE:0.7657 | R2:0.5200
+2066.9s 41 >> New best RMSE: 1.0249
+2357.9s 42 Epoch   6/120 | Loss:1.0670 | LR:0.007941
+2357.9s 43 Val -> MSE:1.0547 | RMSE:1.0270 | MAE:0.7702 | R2:0.5181
+2357.9s 44 >> No improve 1/40
+2648.8s 45 Epoch   7/120 | Loss:1.0639 | LR:0.007273
+2648.8s 46 Val -> MSE:1.0471 | RMSE:1.0233 | MAE:0.7649 | R2:0.5216
+2648.8s 47 >> New best RMSE: 1.0233
+2939.9s 48 Epoch   8/120 | Loss:1.0612 | LR:0.006549
+2939.9s 49 Val -> MSE:1.0481 | RMSE:1.0238 | MAE:0.7641 | R2:0.5211
+2939.9s 50 >> No improve 1/40
+3231.2s 51 Epoch   9/120 | Loss:1.0576 | LR:0.005786
+3231.2s 52 Val -> MSE:1.0444 | RMSE:1.0220 | MAE:0.7611 | R2:0.5228
+3231.2s 53 >> New best RMSE: 1.0220
+3522.5s 54 Epoch  10/120 | Loss:1.0541 | LR:0.005005
+3522.5s 55 Val -> MSE:1.0461 | RMSE:1.0228 | MAE:0.7662 | R2:0.5220
+3522.5s 56 >> No improve 1/40
+3813.4s 57 Epoch  11/120 | Loss:1.0499 | LR:0.004224
+3813.4s 58 Val -> MSE:1.0453 | RMSE:1.0224 | MAE:0.7624 | R2:0.5224
+3813.4s 59 >> No improve 2/40
+4104.0s 60 Epoch  12/120 | Loss:1.0457 | LR:0.003461
+4104.0s 61 Val -> MSE:1.0419 | RMSE:1.0207 | MAE:0.7616 | R2:0.5239
+4104.0s 62 >> New best RMSE: 1.0207
+4395.3s 63 Epoch  13/120 | Loss:1.0413 | LR:0.002737
+4395.3s 64 Val -> MSE:1.0442 | RMSE:1.0219 | MAE:0.7657 | R2:0.5229
+4395.3s 65 >> No improve 1/40
+4687.1s 66 Epoch  14/120 | Loss:1.0370 | LR:0.002069
+4687.1s 67 Val -> MSE:1.0425 | RMSE:1.0210 | MAE:0.7637 | R2:0.5236
+4687.1s 68 >> No improve 2/40
+4978.6s 69 Epoch  15/120 | Loss:1.0331 | LR:0.001473
+4978.6s 70 Val -> MSE:1.0382 | RMSE:1.0189 | MAE:0.7586 | R2:0.5256
+4978.6s 71 >> New best RMSE: 1.0189
+5270.0s 72 Epoch  16/120 | Loss:1.0297 | LR:0.000964
+5270.0s 73 Val -> MSE:1.0400 | RMSE:1.0198 | MAE:0.7620 | R2:0.5248
+5270.0s 74 >> No improve 1/40
+5573.2s 75 Epoch  17/120 | Loss:1.0272 | LR:0.000554
+5573.2s 76 Val -> MSE:1.0369 | RMSE:1.0183 | MAE:0.7573 | R2:0.5262
+5573.2s 77 >> New best RMSE: 1.0183
+5864.4s 78 Epoch  18/120 | Loss:1.0257 | LR:0.000254
+5864.4s 79 Val -> MSE:1.0386 | RMSE:1.0191 | MAE:0.7591 | R2:0.5254
+5864.4s 80 >> No improve 1/40
+6155.5s 81 Epoch  19/120 | Loss:1.0248 | LR:0.000071
+6155.5s 82 Val -> MSE:1.0381 | RMSE:1.0189 | MAE:0.7595 | R2:0.5257
+6155.5s 83 >> No improve 2/40
+6446.8s 84 Epoch  20/120 | Loss:1.0244 | LR:0.000010
+6446.8s 85 Val -> MSE:1.0386 | RMSE:1.0191 | MAE:0.7602 | R2:0.5254
+6446.8s 86 >> No improve 3/40
+6739.2s 87 Epoch  21/120 | Loss:1.0394 | LR:0.009985
+6739.2s 88 Val -> MSE:1.0385 | RMSE:1.0191 | MAE:0.7578 | R2:0.5255
+6739.2s 89 >> No improve 4/40
+7032.8s 90 Epoch  22/120 | Loss:1.0294 | LR:0.009939
+7032.8s 91 Val -> MSE:1.0434 | RMSE:1.0215 | MAE:0.7637 | R2:0.5232
+7032.8s 92 >> No improve 5/40
+7326.4s 93 Epoch  23/120 | Loss:1.0178 | LR:0.009862
+7326.4s 94 Val -> MSE:1.0389 | RMSE:1.0193 | MAE:0.7563 | R2:0.5253
+7326.4s 95 >> No improve 6/40
+7619.6s 96 Epoch  24/120 | Loss:1.0054 | LR:0.009756
+7619.6s 97 Val -> MSE:1.0435 | RMSE:1.0215 | MAE:0.7630 | R2:0.5232
+7619.6s 98 >> No improve 7/40
+7913.1s 99 Epoch  25/120 | Loss:0.9932 | LR:0.009620
+7913.1s 100 Val -> MSE:1.0348 | RMSE:1.0173 | MAE:0.7531 | R2:0.5272
+7913.1s 101 >> New best RMSE: 1.0173
+8206.5s 102 Epoch  26/120 | Loss:0.9812 | LR:0.009456
+8206.5s 103 Val -> MSE:1.0349 | RMSE:1.0173 | MAE:0.7528 | R2:0.5271
+8206.5s 104 >> No improve 1/40
+8499.0s 105 Epoch  27/120 | Loss:0.9700 | LR:0.009264
+8499.0s 106 Val -> MSE:1.0321 | RMSE:1.0159 | MAE:0.7508 | R2:0.5284
+8499.0s 107 >> New best RMSE: 1.0159
+8791.4s 108 Epoch  28/120 | Loss:0.9592 | LR:0.009046
+8791.4s 109 Val -> MSE:1.0476 | RMSE:1.0235 | MAE:0.7604 | R2:0.5213
+8791.4s 110 >> No improve 1/40
+9084.5s 111 Epoch  29/120 | Loss:0.9494 | LR:0.008803
+9084.5s 112 Val -> MSE:1.0542 | RMSE:1.0267 | MAE:0.7677 | R2:0.5183
+9084.5s 113 >> No improve 2/40
+9378.2s 114 Epoch  30/120 | Loss:0.9402 | LR:0.008537
+9378.2s 115 Val -> MSE:1.0327 | RMSE:1.0162 | MAE:0.7447 | R2:0.5281
+9378.2s 116 >> No improve 3/40
+9670.3s 117 Epoch  31/120 | Loss:0.9314 | LR:0.008249
+9670.3s 118 Val -> MSE:1.0560 | RMSE:1.0276 | MAE:0.7633 | R2:0.5175
+9670.3s 119 >> No improve 4/40
+9963.5s 120 Epoch  32/120 | Loss:0.9234 | LR:0.007941
+9963.5s 121 Val -> MSE:1.0390 | RMSE:1.0193 | MAE:0.7505 | R2:0.5253
+9963.5s 122 >> No improve 5/40
+10255.7s 123 Epoch  33/120 | Loss:0.9153 | LR:0.007615
+10255.7s 124 Val -> MSE:1.0562 | RMSE:1.0277 | MAE:0.7652 | R2:0.5174
+10255.7s 125 >> No improve 6/40
+10547.1s 126 Epoch  34/120 | Loss:0.9080 | LR:0.007273
+10547.1s 127 Val -> MSE:1.0527 | RMSE:1.0260 | MAE:0.7529 | R2:0.5190
+10547.1s 128 >> No improve 7/40
+10849.9s 129 Epoch  35/120 | Loss:0.9009 | LR:0.006917
+10849.9s 130 Val -> MSE:1.0452 | RMSE:1.0224 | MAE:0.7468 | R2:0.5224
+10849.9s 131 >> No improve 8/40
+11140.8s 132 Epoch  36/120 | Loss:0.8937 | LR:0.006549
+11140.8s 133 Val -> MSE:1.0446 | RMSE:1.0221 | MAE:0.7547 | R2:0.5227
+11140.8s 134 >> No improve 9/40
+11431.1s 135 Epoch  37/120 | Loss:0.8872 | LR:0.006171
+11431.1s 136 Val -> MSE:1.0468 | RMSE:1.0231 | MAE:0.7537 | R2:0.5217
+11431.1s 137 >> No improve 10/40
+11721.5s 138 Epoch  38/120 | Loss:0.8808 | LR:0.005786
+11721.5s 139 Val -> MSE:1.0498 | RMSE:1.0246 | MAE:0.7546 | R2:0.5203
+11721.5s 140 >> No improve 11/40
+12011.9s 141 Epoch  39/120 | Loss:0.8746 | LR:0.005397
+12011.9s 142 Val -> MSE:1.0566 | RMSE:1.0279 | MAE:0.7536 | R2:0.5172
+12011.9s 143 >> No improve 12/40
+12301.9s 144 Epoch  40/120 | Loss:0.8688 | LR:0.005005
+12301.9s 145 Val -> MSE:1.0540 | RMSE:1.0267 | MAE:0.7548 | R2:0.5184
+12301.9s 146 >> No improve 13/40
+12592.2s 147 Epoch  41/120 | Loss:0.8629 | LR:0.004613
+12592.2s 148 Val -> MSE:1.0539 | RMSE:1.0266 | MAE:0.7542 | R2:0.5184
+12592.2s 149 >> No improve 14/40
+12882.5s 150 Epoch  42/120 | Loss:0.8572 | LR:0.004224
+12882.5s 151 Val -> MSE:1.0628 | RMSE:1.0309 | MAE:0.7571 | R2:0.5144
+12882.5s 152 >> No improve 15/40
+13172.5s 153 Epoch  43/120 | Loss:0.8519 | LR:0.003839
+13172.5s 154 Val -> MSE:1.0751 | RMSE:1.0369 | MAE:0.7664 | R2:0.5087
+13172.5s 155 >> No improve 16/40
+13462.3s 156 Epoch  44/120 | Loss:0.8470 | LR:0.003461
+13462.3s 157 Val -> MSE:1.0639 | RMSE:1.0314 | MAE:0.7542 | R2:0.5139
+13462.3s 158 >> No improve 17/40
+13752.7s 159 Epoch  45/120 | Loss:0.8425 | LR:0.003093
+13752.7s 160 Val -> MSE:1.0764 | RMSE:1.0375 | MAE:0.7645 | R2:0.5082
+13752.7s 161 >> No improve 18/40
+14045.0s 162 Epoch  46/120 | Loss:0.8376 | LR:0.002737
+14045.0s 163 Val -> MSE:1.0683 | RMSE:1.0336 | MAE:0.7614 | R2:0.5119
+14045.0s 164 >> No improve 19/40
+14339.3s 165 Epoch  47/120 | Loss:0.8336 | LR:0.002395
+14339.3s 166 Val -> MSE:1.0695 | RMSE:1.0342 | MAE:0.7560 | R2:0.5113
+14339.3s 167 >> No improve 20/40
+14630.6s 168 Epoch  48/120 | Loss:0.8297 | LR:0.002069
+14630.6s 169 Val -> MSE:1.0697 | RMSE:1.0343 | MAE:0.7588 | R2:0.5112
+14630.6s 170 >> No improve 21/40
+14921.0s 171 Epoch  49/120 | Loss:0.8261 | LR:0.001761
+14921.0s 172 Val -> MSE:1.0729 | RMSE:1.0358 | MAE:0.7604 | R2:0.5097
+14921.0s 173 >> No improve 22/40
+15211.0s 174 Epoch  50/120 | Loss:0.8227 | LR:0.001473
+15211.0s 175 Val -> MSE:1.0706 | RMSE:1.0347 | MAE:0.7614 | R2:0.5108
+15211.0s 176 >> No improve 23/40
+15501.4s 177 Epoch  51/120 | Loss:0.8199 | LR:0.001207
+15501.4s 178 Val -> MSE:1.0709 | RMSE:1.0349 | MAE:0.7560 | R2:0.5107
+15501.4s 179 >> No improve 24/40
+15803.2s 180 Epoch  52/120 | Loss:0.8172 | LR:0.000964
+15803.2s 181 Val -> MSE:1.0686 | RMSE:1.0337 | MAE:0.7552 | R2:0.5117
+15803.2s 182 >> No improve 25/40
+16093.2s 183 Epoch  53/120 | Loss:0.8151 | LR:0.000746
+16093.2s 184 Val -> MSE:1.0726 | RMSE:1.0357 | MAE:0.7588 | R2:0.5099
+16093.2s 185 >> No improve 26/40
+16386.3s 186 Epoch  54/120 | Loss:0.8131 | LR:0.000554
+16386.3s 187 Val -> MSE:1.0696 | RMSE:1.0342 | MAE:0.7574 | R2:0.5113
+16386.3s 188 >> No improve 27/40
+16679.9s 189 Epoch  55/120 | Loss:0.8114 | LR:0.000390
+16679.9s 190 Val -> MSE:1.0676 | RMSE:1.0333 | MAE:0.7532 | R2:0.5122
+16679.9s 191 >> No improve 28/40
+16972.1s 192 Epoch  56/120 | Loss:0.8103 | LR:0.000254
+16972.1s 193 Val -> MSE:1.0742 | RMSE:1.0364 | MAE:0.7608 | R2:0.5092
+16972.1s 194 >> No improve 29/40
+17264.5s 195 Epoch  57/120 | Loss:0.8090 | LR:0.000148
+17264.5s 196 Val -> MSE:1.0705 | RMSE:1.0346 | MAE:0.7574 | R2:0.5109
+17264.5s 197 >> No improve 30/40
+17556.6s 198 Epoch  58/120 | Loss:0.8082 | LR:0.000071
+17556.6s 199 Val -> MSE:1.0713 | RMSE:1.0350 | MAE:0.7570 | R2:0.5105
+17556.6s 200 >> No improve 31/40
+17848.6s 201 Epoch  59/120 | Loss:0.8081 | LR:0.000025
+17848.6s 202 Val -> MSE:1.0716 | RMSE:1.0352 | MAE:0.7576 | R2:0.5104
+17848.6s 203 >> No improve 32/40
+18140.4s 204 Epoch  60/120 | Loss:0.8078 | LR:0.000010
+18140.4s 205 Val -> MSE:1.0706 | RMSE:1.0347 | MAE:0.7576 | R2:0.5108
+18140.4s 206 >> No improve 33/40
+18432.2s 207 Epoch  61/120 | Loss:0.8801 | LR:0.009996
+18432.2s 208 Val -> MSE:1.0847 | RMSE:1.0415 | MAE:0.7805 | R2:0.5044
+18432.2s 209 >> No improve 34/40
+18724.4s 210 Epoch  62/120 | Loss:0.8653 | LR:0.009985
+18724.4s 211 Val -> MSE:1.0495 | RMSE:1.0244 | MAE:0.7481 | R2:0.5205
+18724.4s 212 >> No improve 35/40
+19017.3s 213 Epoch  63/120 | Loss:0.8616 | LR:0.009965
+19017.3s 214 Val -> MSE:1.0620 | RMSE:1.0306 | MAE:0.7689 | R2:0.5147
+19017.3s 215 >> No improve 36/40
+19314.1s 216 Epoch  64/120 | Loss:0.8574 | LR:0.009939
+19314.1s 217 Val -> MSE:1.0612 | RMSE:1.0301 | MAE:0.7611 | R2:0.5151
+19314.1s 218 >> No improve 37/40
+19610.4s 219 Epoch  65/120 | Loss:0.8529 | LR:0.009904
+19610.4s 220 Val -> MSE:1.0746 | RMSE:1.0366 | MAE:0.7709 | R2:0.5090
+19610.4s 221 >> No improve 38/40
+19906.6s 222 Epoch  66/120 | Loss:0.8485 | LR:0.009862
+19906.6s 223 Val -> MSE:1.0660 | RMSE:1.0325 | MAE:0.7629 | R2:0.5129
+19906.6s 224 >> No improve 39/40
+20198.6s 225 Epoch  67/120 | Loss:0.8440 | LR:0.009812
+20198.6s 226 Val -> MSE:1.0807 | RMSE:1.0396 | MAE:0.7753 | R2:0.5062
+20198.6s 227 >> No improve 40/40
+20198.6s 228 
+20198.6s 229 Early stopping tại epoch 67
+20198.6s 230 
+20198.6s 231 Loaded best model epoch 27 | RMSE:1.0159
+20198.6s 232 
+20198.6s 233 ==================================================
+20198.6s 234 FINAL EVALUATION
+20198.6s 235 ==================================================
+20259.1s 236 
+20259.1s 237 Train:
+20259.1s 238 MSE:0.9210 | RMSE:0.9597 | MAE:0.7089 | R2:0.5787
+20259.1s 239 
+20259.1s 240 Validation:
+20259.1s 241 MSE:1.0321 | RMSE:1.0159 | MAE:0.7508 | R2:0.5284
+20259.1s 242 
+20259.1s 243 Test:
+20259.1s 244 MSE:1.0321 | RMSE:1.0159 | MAE:0.7508 | R2:0.5279
+20259.1s 245 
+20259.1s 246 ==================================================
+20259.1s 247 PERMUTATION IMPORTANCE
+20259.1s 248 ==================================================
+20264.9s 249 
+20264.9s 250 Baseline Val RMSE: 1.0159
+20264.9s 251 Feature                    RMSE change  Đánh giá
+20264.9s 252 -------------------------------------------------------
+20282.8s 253 user_review_count         +0.0896       ✓ quan trọng
+20300.6s 254 user_avg_stars            +0.4090       ✓ quan trọng
+20318.4s 255 user_fans                 +0.0228       ✓ quan trọng
+20336.1s 256 user_useful               +0.1090       ✓ quan trọng
+20365.8s 257 user_funny                +0.0486       ✓ quan trọng
+20383.5s 258 user_cool                 +0.0828       ✓ quan trọng
+20401.2s 259 user_years_active         +0.0232       ✓ quan trọng
+20418.8s 260 user_elite                +0.0235       ✓ quan trọng
+20436.5s 261 user_friends              +0.0206       ✓ quan trọng
+20454.1s 262 user_compliments          +0.0225       ✓ quan trọng
+20471.6s 263 biz_stars                 +0.2354       ✓ quan trọng
+20489.3s 264 biz_review_count          +0.0299       ✓ quan trọng
+20507.1s 265 biz_is_open               +0.0218       ✓ quan trọng
+20524.9s 266 biz_cat_count             +0.0208       ✓ quan trọng
+20542.6s 267 biz_open_days             +0.0208       ✓ quan trọng
+20560.0s 268 biz_price_range           +0.0220       ✓ quan trọng
+20577.4s 269 biz_total_hours           +0.0206       ✓ quan trọng
+20594.9s 270 biz_city                  +0.0206       ✓ quan trọng
+20612.2s 271 utip_count                +0.0215       ✓ quan trọng
+20629.5s 272 utip_avg_len              +0.0212       ✓ quan trọng
+20646.8s 273 btip_count                +0.0241       ✓ quan trọng
+20664.1s 274 btip_avg_len              +0.0207       ✓ quan trọng
+20681.5s 275 btip_avg_comp             +0.0205       ✓ quan trọng
+20698.8s 276 checkin_count             +0.0381       ✓ quan trọng
+20716.1s 277 review_useful             +0.0939       ✓ quan trọng
+20733.5s 278 review_funny              +0.0630       ✓ quan trọng
+20750.8s 279 review_cool               +0.1216       ✓ quan trọng
+20768.1s 280 review_text_len           +0.0665       ✓ quan trọng
+20785.4s 281 year                      +0.0372       ✓ quan trọng
+20802.7s 282 month                     +0.0210       ✓ quan trọng
+20819.9s 283 weekday                   +0.0207       ✓ quan trọng
+20837.2s 284 hour                      +0.0207       ✓ quan trọng
+20874.8s 285 Model saved to /kaggle/working/models/fm_pytorch_v2.pt
+20882.4s 286 /usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+20882.4s 287 cells[i][c] = re.sub('\\\\\|', '|', cell)
+20882.6s 288 /usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+20882.6s 289 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+20883.4s 290 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+20883.7s 291 [NbConvertApp] Writing 47569 bytes to __notebook__.ipynb
+20886.0s 292 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+20886.9s 293 [NbConvertApp] Writing 409774 bytes to __results__.html
