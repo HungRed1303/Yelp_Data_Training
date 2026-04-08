@@ -296,7 +296,7 @@ class YelpDataset(IterableDataset):
 # =========================================================
 
 class FMModel(nn.Module):
-    def __init__(self, n_user, n_business, num_dim, k=256, dropout=0.21055131352889944):
+    def __init__(self, n_user, n_business, num_dim, k=128, dropout=0.15):
         super().__init__()
         self.dropout = nn.Dropout(dropout)
         self.k = k
@@ -477,7 +477,7 @@ def train_model(
     print(f"Total parameters: {total_params:,}, Trainable: {trainable_params:,}")
 
     # SGD with lower learning rate for stability (features are normalized)
-    optimizer = optim.SGD(model.parameters(), lr=0.029573108636716514, momentum=0.9, weight_decay=0.00011910009742076679, nesterov=True)
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-5, nesterov=True)
     loss_fn = nn.MSELoss()
 
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
