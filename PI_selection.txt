@@ -1,0 +1,299 @@
+import os
+import json
+import torch
+import torch.nn as nn
+import numpy as np
+import math
+from torch.utils.data import DataLoader, TensorDataset
+
+# =========================================================
+# CONSTANTS & CONFIGURATION
+# =========================================================
+TARGET_MIN   = 1.0
+TARGET_MAX   = 5.0
+TARGET_RANGE = TARGET_MAX - TARGET_MIN
+
+def denormalize_target(rating):
+    return rating * TARGET_RANGE + TARGET_MIN
+
+# =========================================================
+# FM MODEL (Kiến trúc chuẩn)
+# =========================================================
+class FMModel(nn.Module):
+    def __init__(self, n_user, n_business, num_dim, k=64, dropout=0.15):
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.k       = k
+        self.num_dim = num_dim
+
+        # Linear terms
+        self.bias     = nn.Parameter(torch.tensor([0.5]))
+        self.user_lin = nn.Embedding(n_user, 1)
+        self.biz_lin  = nn.Embedding(n_business, 1)
+        self.num_lin  = nn.Parameter(torch.zeros(num_dim))
+
+        # Interaction embeddings
+        self.user_emb = nn.Embedding(n_user, k)
+        self.biz_emb  = nn.Embedding(n_business, k)
+        self.num_emb  = nn.Parameter(torch.zeros(num_dim, k))
+
+        # Cold start fallback embeddings
+        self.avg_user_emb = nn.Parameter(torch.zeros(k))
+        self.avg_biz_emb  = nn.Parameter(torch.zeros(k))
+        self.avg_user_lin = nn.Parameter(torch.zeros(1))
+        self.avg_biz_lin  = nn.Parameter(torch.zeros(1))
+
+    def forward(self, user, biz, num, cold_user_mask=None, cold_biz_mask=None):
+        u_lin = self.user_lin(user).squeeze(-1)
+        b_lin = self.biz_lin(biz).squeeze(-1)
+
+        if cold_user_mask is not None:
+            u_lin = torch.where(cold_user_mask, self.avg_user_lin.expand_as(u_lin), u_lin)
+        if cold_biz_mask is not None:
+            b_lin = torch.where(cold_biz_mask, self.avg_biz_lin.expand_as(b_lin), b_lin)
+
+        linear = self.bias + u_lin + b_lin + (num * self.num_lin).sum(dim=1)
+
+        u_emb = self.user_emb(user)
+        b_emb = self.biz_emb(biz)
+
+        if cold_user_mask is not None:
+            u_emb = torch.where(cold_user_mask.unsqueeze(-1), self.avg_user_emb.expand_as(u_emb), u_emb)
+        if cold_biz_mask is not None:
+            b_emb = torch.where(cold_biz_mask.unsqueeze(-1), self.avg_biz_emb.expand_as(b_emb), b_emb)
+
+        u = u_emb.unsqueeze(1)
+        b = b_emb.unsqueeze(1)
+        n = num.unsqueeze(-1) * self.num_emb
+
+        all_emb = torch.cat([u, b, n], dim=1)
+        all_emb = self.dropout(all_emb)
+
+        sum_sq = all_emb.sum(dim=1) ** 2
+        sq_sum = (all_emb ** 2).sum(dim=1)
+        inter  = 0.5 * (sum_sq - sq_sum).sum(dim=1)
+
+        out = linear + inter
+        if not self.training:
+            out = torch.clamp(out, min=0.0, max=1.0)
+        return out
+
+# =========================================================
+# UTILITIES
+# =========================================================
+class FastTensorDataLoader:
+    def __init__(self, dataset, batch_size, shuffle=False):
+        self.tensors = dataset.tensors
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.n = self.tensors[0].size(0)
+        self.device = self.tensors[0].device
+
+    def __iter__(self):
+        if self.shuffle:
+            self.indices = torch.randperm(self.n, device=self.device)
+        else:
+            self.indices = torch.arange(self.n, device=self.device)
+        self.i = 0
+        return self
+
+    def __next__(self):
+        if self.i >= self.n:
+            raise StopIteration
+        batch_idx = self.indices[self.i : self.i + self.batch_size]
+        self.i += self.batch_size
+        return tuple(t[batch_idx] for t in self.tensors)
+        
+    def __len__(self):
+        return (self.n + self.batch_size - 1) // self.batch_size
+
+def compute_metrics(predictions, targets):
+    predictions = torch.as_tensor(predictions).cpu().float()
+    targets     = torch.as_tensor(targets).cpu().float()
+    mse    = torch.mean((predictions - targets) ** 2).item()
+    rmse   = math.sqrt(mse)
+    return {"MSE": mse, "RMSE": rmse}
+
+def evaluate_model(model, loader, device):
+    model.eval()
+    all_preds, all_targets = [], []
+    with torch.no_grad():
+        for user, biz, num, rating, cold_u, cold_b in loader:
+            num_d = num.to(device, non_blocking=True)
+            cold_user_mask = cold_u.bool().to(device, non_blocking=True)
+            cold_biz_mask  = cold_b.bool().to(device, non_blocking=True)
+            pred = model(
+                user.to(device, non_blocking=True), biz.to(device, non_blocking=True), num_d,
+                cold_user_mask=cold_user_mask,
+                cold_biz_mask=cold_biz_mask,
+            )
+            all_preds.append(denormalize_target(pred.cpu()))
+            all_targets.append(denormalize_target(rating))
+    model.train()
+    return compute_metrics(torch.cat(all_preds), torch.cat(all_targets))
+
+# =========================================================
+# MAIN EVALUATION LOGIC
+# =========================================================
+def run_permutation_importance(model, test_data, feat_names, device="cuda", perm_repeats=3):
+    print("\n" + "=" * 60)
+    print("STAGE: PERMUTATION IMPORTANCE ON DATASET")
+    print("=" * 60)
+    model.eval()
+    
+    num_dim = len(feat_names)
+    
+    try:
+        if device == "cuda":
+            gpu_tensors = [t.to(device) for t in test_data.tensors]
+            gpu_test_data = TensorDataset(*gpu_tensors)
+            test_loader = FastTensorDataLoader(gpu_test_data, batch_size=4096, shuffle=False)
+            print("  Data loaded to GPU VRAM for fast evaluation.")
+        else:
+            raise RuntimeError()
+    except Exception:
+        gpu_test_data = None
+        test_loader = DataLoader(test_data, batch_size=4096, shuffle=False, num_workers=4)
+
+    print("Evaluating base model RMSE...")
+    base_metrics = evaluate_model(model, test_loader, device)
+    base_rmse = base_metrics["RMSE"]
+    print(f"Base Test RMSE: {base_rmse:.6f}")
+
+    pi_scores = []
+    
+    print("\nStarting permutation...")
+    for f_idx in range(num_dim):
+        rmse_diffs = []
+        for _ in range(perm_repeats):
+            if gpu_test_data is not None:
+                num_pert = gpu_test_data.tensors[2].clone()
+                idx_perm = torch.randperm(num_pert.shape[0], device=device)
+                num_pert[:, f_idx] = num_pert[idx_perm, f_idx]
+                
+                perturbed_data = TensorDataset(
+                    gpu_test_data.tensors[0],
+                    gpu_test_data.tensors[1],
+                    num_pert,
+                    gpu_test_data.tensors[3],
+                    gpu_test_data.tensors[4],
+                    gpu_test_data.tensors[5],
+                )
+                pert_loader = FastTensorDataLoader(perturbed_data, batch_size=4096, shuffle=False)
+            else:
+                num_pert = test_data.tensors[2].clone()
+                idx_perm = torch.randperm(num_pert.shape[0])
+                num_pert[:, f_idx] = num_pert[idx_perm, f_idx]
+                
+                perturbed_data = TensorDataset(
+                    test_data.tensors[0],
+                    test_data.tensors[1],
+                    num_pert,
+                    test_data.tensors[3],
+                    test_data.tensors[4],
+                    test_data.tensors[5],
+                )
+                pert_loader = DataLoader(perturbed_data, batch_size=4096, shuffle=False, num_workers=4)
+                
+            pert_metrics = evaluate_model(model, pert_loader, device)
+            rmse_diffs.append(pert_metrics["RMSE"] - base_rmse)
+            
+        mean_diff = np.mean(rmse_diffs)
+        std_diff = np.std(rmse_diffs, ddof=1) if len(rmse_diffs) > 1 else 0.0
+        pi_scores.append((mean_diff, std_diff))
+        
+        print(f"  Feature {f_idx+1:02d}/{num_dim} [{feat_names[f_idx]:<20}]: PI = {mean_diff:>10.6f} ± {std_diff:>8.6f}")
+        
+    print(f"\n  Permutation Importance (RMSE diff) Ranking:")
+    sorted_idx = np.argsort([x[0] for x in pi_scores])[::-1]
+    
+    results = []
+    for rank, idx in enumerate(sorted_idx):
+        mean_diff, std_diff = pi_scores[idx]
+        print(f"  {rank+1:<3} {feat_names[idx]:<25} PI: {mean_diff:>10.6f} ± {std_diff:>8.6f}")
+        results.append({
+            "feature": feat_names[idx],
+            "pi_mean": float(mean_diff),
+            "pi_std": float(std_diff)
+        })
+        
+    return results
+
+def main():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    # ── Các đường dẫn giống như output của pipeline training ──
+    work_dir = "/kaggle/working/"
+    if not os.path.exists(work_dir):
+        work_dir = "." # Fallback test local
+    
+    input_dir = "/kaggle/input/notebooks/nguynthnhhuy22120138/fm-khong-loc/"
+    if not os.path.exists(input_dir):
+        input_dir = "." # Fallback test local
+        
+    val_file   = os.path.join(input_dir, "val_data.pt")
+    info_file  = os.path.join(input_dir, "model_info.json")
+    model_path = os.path.join(input_dir, "fm_model.pt")
+    
+    for p in [val_file, info_file, model_path]:
+        if not os.path.exists(p):
+            print(f"LỖI: Không tìm thấy file {p}! Hãy chắc chắn FM pipeline đã chạy xong và lưu file.")
+            return
+
+    # 1. Đọc metadata
+    print(f"Đọc metadata từ {info_file}...")
+    with open(info_file, "r") as f:
+        info = json.load(f)
+        
+    n_users = info["n_users"]
+    n_businesses = info["n_businesses"]
+    num_dim = info["num_features_used"]
+    feat_names = info.get("selected_features", info["all_features"])
+
+    # 2. Khởi tạo mô hình độc lập
+    print(f"Khởi tạo FMModel (users={n_users}, bizes={n_businesses}, num_dim={num_dim})...")
+    model = FMModel(n_user=n_users, n_business=n_businesses, num_dim=num_dim, k=64, dropout=0.0).to(device)
+    
+    print(f"Nạp trọng số từ {model_path}...")
+    state_dict = torch.load(model_path, map_location=device, weights_only=True)
+    
+    # Xử lý lỗi nạp trọng số nếu mô hình đã được train qua `torch.compile()`
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        if k.startswith("_orig_mod."):
+            new_state_dict[k.replace("_orig_mod.", "")] = v
+        else:
+            new_state_dict[k] = v
+            
+    model.load_state_dict(new_state_dict)
+
+    # 3. Nạp data từ tập Validate đã lưu (.pt)
+    print(f"Nạp tập dữ liệu Validate từ {val_file} để chạy PI...")
+    val_tensors = torch.load(val_file, map_location="cpu") # Có thể dùng CPU để load ra mảng
+    
+    users_arr, bizs_arr, num_arr, ratings_arr, coldu_arr, coldb_arr = val_tensors
+
+    
+    # Đảm bảo số chiều map với số lượng features đã lọc (nếu có)
+    if num_dim < num_arr.shape[1] and "all_features" in info:
+        all_feats = info["all_features"]
+        missing_feats = [f for f in feat_names if f not in all_feats]
+        if missing_feats:
+            raise ValueError(f"Lỗi: Không tìm thấy các feature sau trong all_features: {missing_feats}")
+        indices_feat = [all_feats.index(f) for f in feat_names]
+        num_arr = num_arr[:, indices_feat]
+
+    test_data = TensorDataset(users_arr, bizs_arr, num_arr, ratings_arr, coldu_arr, coldb_arr)
+    print(f"Đã tạo Dataset mẫu: {len(test_data):,} reviews.")
+
+    # 4. Chạy Permutation Importance
+    pi_results = run_permutation_importance(model, test_data, feat_names, device=device, perm_repeats=3)
+    
+    out_file = os.path.join(work_dir, "permutation_importance_results.json")
+    print(f"\nBắt đầu lưu kết quả tại {out_file}...")
+    with open(out_file, "w") as f:
+        json.dump(pi_results, f, indent=2)
+    print("Hoàn tất!")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,653 @@
+Loading contexts...
+Loaded top 12 features from PI selection (/kaggle/input/datasets/th4nhuy/permutation-importance-results-json/permutation_importance_results.json): ['u_cool', 'r_cool', 'r_text_len', 'u_funny', 'r_useful', 'b_review_count', 'u_useful', 'r_funny', 'u_review_count', 't_year', 'ck_count', 'ck_density']
+
+============================================================
+LOADING ALL DATA INTO MEMORY (normalized + cold flags)...
+============================================================
+  [Single Pass] Reading reviews + counting...
+  6,990,280 reviews loaded. Vectorizing features...
+  Filtering 12 selected features...
+  Caching to /kaggle/working/dataset_cache.npz...
+Total users: 1,987,929 | Cold start (≤5): 1,759,734 (88.5%)
+Total biz:   150,346 | Cold start (≤5): 12,901 (8.6%)
+Total samples: 6,990,280
+Numerical feature dim: 12 (out of 32)
+
+============================================================
+STAGE 1: FM TRAINING — SỬ DỤNG 12 FEATURES
+============================================================
+Using device  : cuda
+Num features  : 12
+Train: 5,592,224 | Val:   699,028   | Test:  699,028
+Cold start (train-only, ≤5): users=1,567,522/1,746,386 | biz=27,949/150,344
+Toàn bộ dữ liệu (~1.1GB) đã được nạp thẳng lên GPU VRAM! Sử dụng Fast GPU Dataloader.
+Unique users: 1,987,929 | Unique businesses: 150,346
+Compiling model with torch.compile(mode='reduce-overhead') for small batch sizes...
+Trainable parameters: 138,988,786
+
+Bắt đầu training (SGD Nesterov, target=[0,1])...
+
+Epoch 001/200 | Train Loss (norm): 0.121111 | LR: 0.002000
+  Val → MSE: 1.8512 | RMSE: 1.3606 | MAE: 1.1438 | R2: 0.1534
+  ★ New best RMSE: 1.3606
+Epoch 002/200 | Train Loss (norm): 0.115253 | LR: 0.004000
+  Val → MSE: 1.8386 | RMSE: 1.3560 | MAE: 1.1380 | R2: 0.1592
+  ★ New best RMSE: 1.3560
+Epoch 003/200 | Train Loss (norm): 0.114297 | LR: 0.006000
+  Val → MSE: 1.8202 | RMSE: 1.3492 | MAE: 1.1304 | R2: 0.1676
+  ★ New best RMSE: 1.3492
+Epoch 004/200 | Train Loss (norm): 0.113149 | LR: 0.008000
+  Val → MSE: 1.8004 | RMSE: 1.3418 | MAE: 1.1193 | R2: 0.1767
+  ★ New best RMSE: 1.3418
+Epoch 005/200 | Train Loss (norm): 0.111996 | LR: 0.010000
+  Val → MSE: 1.7817 | RMSE: 1.3348 | MAE: 1.1153 | R2: 0.1852
+  ★ New best RMSE: 1.3348
+Epoch 006/200 | Train Loss (norm): 0.110915 | LR: 0.007941
+  Val → MSE: 1.7634 | RMSE: 1.3279 | MAE: 1.1041 | R2: 0.1936
+  ★ New best RMSE: 1.3279
+Epoch 007/200 | Train Loss (norm): 0.110081 | LR: 0.007273
+  Val → MSE: 1.7521 | RMSE: 1.3237 | MAE: 1.0982 | R2: 0.1988
+  ★ New best RMSE: 1.3237
+Epoch 008/200 | Train Loss (norm): 0.109472 | LR: 0.006549
+  Val → MSE: 1.7426 | RMSE: 1.3201 | MAE: 1.0902 | R2: 0.2031
+  ★ New best RMSE: 1.3201
+Epoch 009/200 | Train Loss (norm): 0.108954 | LR: 0.005786
+  Val → MSE: 1.7349 | RMSE: 1.3171 | MAE: 1.0894 | R2: 0.2067
+  ★ New best RMSE: 1.3171
+Epoch 010/200 | Train Loss (norm): 0.108496 | LR: 0.005005
+  Val → MSE: 1.7279 | RMSE: 1.3145 | MAE: 1.0851 | R2: 0.2098
+  ★ New best RMSE: 1.3145
+Epoch 011/200 | Train Loss (norm): 0.108096 | LR: 0.004224
+  Val → MSE: 1.7221 | RMSE: 1.3123 | MAE: 1.0824 | R2: 0.2125
+  ★ New best RMSE: 1.3123
+Epoch 012/200 | Train Loss (norm): 0.107753 | LR: 0.003461
+  Val → MSE: 1.7174 | RMSE: 1.3105 | MAE: 1.0825 | R2: 0.2146
+  ★ New best RMSE: 1.3105
+Epoch 013/200 | Train Loss (norm): 0.107482 | LR: 0.002737
+  Val → MSE: 1.7132 | RMSE: 1.3089 | MAE: 1.0789 | R2: 0.2165
+  ★ New best RMSE: 1.3089
+Epoch 014/200 | Train Loss (norm): 0.107245 | LR: 0.002069
+  Val → MSE: 1.7100 | RMSE: 1.3077 | MAE: 1.0782 | R2: 0.2180
+  ★ New best RMSE: 1.3077
+Epoch 015/200 | Train Loss (norm): 0.107066 | LR: 0.001473
+  Val → MSE: 1.7076 | RMSE: 1.3068 | MAE: 1.0762 | R2: 0.2191
+  ★ New best RMSE: 1.3068
+Epoch 016/200 | Train Loss (norm): 0.106939 | LR: 0.000964
+  Val → MSE: 1.7059 | RMSE: 1.3061 | MAE: 1.0754 | R2: 0.2199
+  ★ New best RMSE: 1.3061
+Epoch 017/200 | Train Loss (norm): 0.106857 | LR: 0.000554
+  Val → MSE: 1.7048 | RMSE: 1.3057 | MAE: 1.0762 | R2: 0.2204
+  ★ New best RMSE: 1.3057
+Epoch 018/200 | Train Loss (norm): 0.106795 | LR: 0.000254
+  Val → MSE: 1.7042 | RMSE: 1.3054 | MAE: 1.0757 | R2: 0.2207
+  ★ New best RMSE: 1.3054
+Epoch 019/200 | Train Loss (norm): 0.106769 | LR: 0.000071
+  Val → MSE: 1.7039 | RMSE: 1.3053 | MAE: 1.0762 | R2: 0.2208
+  ★ New best RMSE: 1.3053
+Epoch 020/200 | Train Loss (norm): 0.106746 | LR: 0.010000
+  Val → MSE: 1.7038 | RMSE: 1.3053 | MAE: 1.0763 | R2: 0.2208
+  No improvement 1/30
+Epoch 021/200 | Train Loss (norm): 0.106431 | LR: 0.009985
+  Val → MSE: 1.6925 | RMSE: 1.3010 | MAE: 1.0714 | R2: 0.2260
+  ★ New best RMSE: 1.3010
+Epoch 022/200 | Train Loss (norm): 0.105721 | LR: 0.009939
+  Val → MSE: 1.6816 | RMSE: 1.2968 | MAE: 1.0630 | R2: 0.2310
+  ★ New best RMSE: 1.2968
+Epoch 023/200 | Train Loss (norm): 0.104986 | LR: 0.009862
+  Val → MSE: 1.6701 | RMSE: 1.2923 | MAE: 1.0615 | R2: 0.2363
+  ★ New best RMSE: 1.2923
+Epoch 024/200 | Train Loss (norm): 0.104222 | LR: 0.009756
+  Val → MSE: 1.6592 | RMSE: 1.2881 | MAE: 1.0583 | R2: 0.2412
+  ★ New best RMSE: 1.2881
+Epoch 025/200 | Train Loss (norm): 0.103467 | LR: 0.009620
+  Val → MSE: 1.6485 | RMSE: 1.2839 | MAE: 1.0558 | R2: 0.2462
+  ★ New best RMSE: 1.2839
+Epoch 026/200 | Train Loss (norm): 0.102714 | LR: 0.009456
+  Val → MSE: 1.6369 | RMSE: 1.2794 | MAE: 1.0457 | R2: 0.2515
+  ★ New best RMSE: 1.2794
+Epoch 027/200 | Train Loss (norm): 0.101953 | LR: 0.009264
+  Val → MSE: 1.6262 | RMSE: 1.2752 | MAE: 1.0441 | R2: 0.2563
+  ★ New best RMSE: 1.2752
+Epoch 028/200 | Train Loss (norm): 0.101222 | LR: 0.009046
+  Val → MSE: 1.6162 | RMSE: 1.2713 | MAE: 1.0411 | R2: 0.2609
+  ★ New best RMSE: 1.2713
+Epoch 029/200 | Train Loss (norm): 0.100468 | LR: 0.008803
+  Val → MSE: 1.6056 | RMSE: 1.2671 | MAE: 1.0324 | R2: 0.2658
+  ★ New best RMSE: 1.2671
+Epoch 030/200 | Train Loss (norm): 0.099734 | LR: 0.008537
+  Val → MSE: 1.5962 | RMSE: 1.2634 | MAE: 1.0315 | R2: 0.2701
+  ★ New best RMSE: 1.2634
+Epoch 031/200 | Train Loss (norm): 0.099029 | LR: 0.008249
+  Val → MSE: 1.5878 | RMSE: 1.2601 | MAE: 1.0294 | R2: 0.2739
+  ★ New best RMSE: 1.2601
+Epoch 032/200 | Train Loss (norm): 0.098369 | LR: 0.007941
+  Val → MSE: 1.5779 | RMSE: 1.2561 | MAE: 1.0228 | R2: 0.2784
+  ★ New best RMSE: 1.2561
+Epoch 033/200 | Train Loss (norm): 0.097730 | LR: 0.007615
+  Val → MSE: 1.5707 | RMSE: 1.2533 | MAE: 1.0229 | R2: 0.2817
+  ★ New best RMSE: 1.2533
+Epoch 034/200 | Train Loss (norm): 0.097118 | LR: 0.007273
+  Val → MSE: 1.5626 | RMSE: 1.2500 | MAE: 1.0173 | R2: 0.2854
+  ★ New best RMSE: 1.2500
+Epoch 035/200 | Train Loss (norm): 0.096547 | LR: 0.006917
+  Val → MSE: 1.5547 | RMSE: 1.2469 | MAE: 1.0108 | R2: 0.2890
+  ★ New best RMSE: 1.2469
+Epoch 036/200 | Train Loss (norm): 0.096010 | LR: 0.006549
+  Val → MSE: 1.5497 | RMSE: 1.2449 | MAE: 1.0129 | R2: 0.2913
+  ★ New best RMSE: 1.2449
+Epoch 037/200 | Train Loss (norm): 0.095502 | LR: 0.006171
+  Val → MSE: 1.5425 | RMSE: 1.2420 | MAE: 1.0058 | R2: 0.2946
+  ★ New best RMSE: 1.2420
+Epoch 038/200 | Train Loss (norm): 0.095021 | LR: 0.005786
+  Val → MSE: 1.5375 | RMSE: 1.2400 | MAE: 1.0047 | R2: 0.2969
+  ★ New best RMSE: 1.2400
+Epoch 039/200 | Train Loss (norm): 0.094601 | LR: 0.005397
+  Val → MSE: 1.5326 | RMSE: 1.2380 | MAE: 1.0034 | R2: 0.2991
+  ★ New best RMSE: 1.2380
+Epoch 040/200 | Train Loss (norm): 0.094213 | LR: 0.005005
+  Val → MSE: 1.5272 | RMSE: 1.2358 | MAE: 0.9996 | R2: 0.3016
+  ★ New best RMSE: 1.2358
+Epoch 041/200 | Train Loss (norm): 0.093851 | LR: 0.004613
+  Val → MSE: 1.5236 | RMSE: 1.2344 | MAE: 0.9995 | R2: 0.3032
+  ★ New best RMSE: 1.2344
+Epoch 042/200 | Train Loss (norm): 0.093513 | LR: 0.004224
+  Val → MSE: 1.5189 | RMSE: 1.2324 | MAE: 0.9931 | R2: 0.3054
+  ★ New best RMSE: 1.2324
+Epoch 043/200 | Train Loss (norm): 0.093222 | LR: 0.003839
+  Val → MSE: 1.5164 | RMSE: 1.2314 | MAE: 0.9932 | R2: 0.3066
+  ★ New best RMSE: 1.2314
+Epoch 044/200 | Train Loss (norm): 0.092944 | LR: 0.003461
+  Val → MSE: 1.5132 | RMSE: 1.2301 | MAE: 0.9909 | R2: 0.3080
+  ★ New best RMSE: 1.2301
+Epoch 045/200 | Train Loss (norm): 0.092704 | LR: 0.003093
+  Val → MSE: 1.5103 | RMSE: 1.2289 | MAE: 0.9887 | R2: 0.3094
+  ★ New best RMSE: 1.2289
+Epoch 046/200 | Train Loss (norm): 0.092482 | LR: 0.002737
+  Val → MSE: 1.5084 | RMSE: 1.2282 | MAE: 0.9838 | R2: 0.3102
+  ★ New best RMSE: 1.2282
+Epoch 047/200 | Train Loss (norm): 0.092308 | LR: 0.002395
+  Val → MSE: 1.5060 | RMSE: 1.2272 | MAE: 0.9830 | R2: 0.3113
+  ★ New best RMSE: 1.2272
+Epoch 048/200 | Train Loss (norm): 0.092120 | LR: 0.002069
+  Val → MSE: 1.5039 | RMSE: 1.2263 | MAE: 0.9849 | R2: 0.3123
+  ★ New best RMSE: 1.2263
+Epoch 049/200 | Train Loss (norm): 0.091984 | LR: 0.001761
+  Val → MSE: 1.5027 | RMSE: 1.2258 | MAE: 0.9852 | R2: 0.3128
+  ★ New best RMSE: 1.2258
+Epoch 050/200 | Train Loss (norm): 0.091833 | LR: 0.001473
+  Val → MSE: 1.5016 | RMSE: 1.2254 | MAE: 0.9857 | R2: 0.3133
+  ★ New best RMSE: 1.2254
+Epoch 051/200 | Train Loss (norm): 0.091745 | LR: 0.001207
+  Val → MSE: 1.5004 | RMSE: 1.2249 | MAE: 0.9854 | R2: 0.3139
+  ★ New best RMSE: 1.2249
+Epoch 052/200 | Train Loss (norm): 0.091647 | LR: 0.000964
+  Val → MSE: 1.4993 | RMSE: 1.2245 | MAE: 0.9836 | R2: 0.3143
+  ★ New best RMSE: 1.2245
+Epoch 053/200 | Train Loss (norm): 0.091591 | LR: 0.000746
+  Val → MSE: 1.4989 | RMSE: 1.2243 | MAE: 0.9843 | R2: 0.3146
+  ★ New best RMSE: 1.2243
+Epoch 054/200 | Train Loss (norm): 0.091509 | LR: 0.000554
+  Val → MSE: 1.4983 | RMSE: 1.2240 | MAE: 0.9807 | R2: 0.3148
+  ★ New best RMSE: 1.2240
+Epoch 055/200 | Train Loss (norm): 0.091474 | LR: 0.000390
+  Val → MSE: 1.4978 | RMSE: 1.2239 | MAE: 0.9817 | R2: 0.3150
+  ★ New best RMSE: 1.2239
+Epoch 056/200 | Train Loss (norm): 0.091438 | LR: 0.000254
+  Val → MSE: 1.4978 | RMSE: 1.2238 | MAE: 0.9832 | R2: 0.3151
+  No improvement 1/30
+Epoch 057/200 | Train Loss (norm): 0.091423 | LR: 0.000148
+  Val → MSE: 1.4975 | RMSE: 1.2237 | MAE: 0.9829 | R2: 0.3152
+  ★ New best RMSE: 1.2237
+Epoch 058/200 | Train Loss (norm): 0.091409 | LR: 0.000071
+  Val → MSE: 1.4975 | RMSE: 1.2237 | MAE: 0.9833 | R2: 0.3152
+  No improvement 1/30
+Epoch 059/200 | Train Loss (norm): 0.091397 | LR: 0.000025
+  Val → MSE: 1.4973 | RMSE: 1.2237 | MAE: 0.9828 | R2: 0.3153
+  No improvement 2/30
+Epoch 060/200 | Train Loss (norm): 0.091400 | LR: 0.010000
+  Val → MSE: 1.4973 | RMSE: 1.2236 | MAE: 0.9826 | R2: 0.3153
+  No improvement 3/30
+Epoch 061/200 | Train Loss (norm): 0.091388 | LR: 0.009996
+  Val → MSE: 1.4915 | RMSE: 1.2213 | MAE: 0.9783 | R2: 0.3179
+  ★ New best RMSE: 1.2213
+Epoch 062/200 | Train Loss (norm): 0.090857 | LR: 0.009985
+  Val → MSE: 1.4856 | RMSE: 1.2188 | MAE: 0.9727 | R2: 0.3207
+  ★ New best RMSE: 1.2188
+Epoch 063/200 | Train Loss (norm): 0.090322 | LR: 0.009965
+  Val → MSE: 1.4797 | RMSE: 1.2164 | MAE: 0.9755 | R2: 0.3233
+  ★ New best RMSE: 1.2164
+Epoch 064/200 | Train Loss (norm): 0.089822 | LR: 0.009939
+  Val → MSE: 1.4769 | RMSE: 1.2153 | MAE: 0.9604 | R2: 0.3246
+  ★ New best RMSE: 1.2153
+Epoch 065/200 | Train Loss (norm): 0.089375 | LR: 0.009904
+  Val → MSE: 1.4692 | RMSE: 1.2121 | MAE: 0.9683 | R2: 0.3281
+  ★ New best RMSE: 1.2121
+Epoch 066/200 | Train Loss (norm): 0.088898 | LR: 0.009862
+  Val → MSE: 1.4642 | RMSE: 1.2100 | MAE: 0.9642 | R2: 0.3304
+  ★ New best RMSE: 1.2100
+Epoch 067/200 | Train Loss (norm): 0.088473 | LR: 0.009812
+  Val → MSE: 1.4614 | RMSE: 1.2089 | MAE: 0.9654 | R2: 0.3317
+  ★ New best RMSE: 1.2089
+Epoch 068/200 | Train Loss (norm): 0.088072 | LR: 0.009756
+  Val → MSE: 1.4563 | RMSE: 1.2068 | MAE: 0.9594 | R2: 0.3341
+  ★ New best RMSE: 1.2068
+Epoch 069/200 | Train Loss (norm): 0.087666 | LR: 0.009691
+  Val → MSE: 1.4535 | RMSE: 1.2056 | MAE: 0.9613 | R2: 0.3353
+  ★ New best RMSE: 1.2056
+Epoch 070/200 | Train Loss (norm): 0.087308 | LR: 0.009620
+  Val → MSE: 1.4503 | RMSE: 1.2043 | MAE: 0.9608 | R2: 0.3368
+  ★ New best RMSE: 1.2043
+Epoch 071/200 | Train Loss (norm): 0.086963 | LR: 0.009541
+  Val → MSE: 1.4453 | RMSE: 1.2022 | MAE: 0.9529 | R2: 0.3391
+  ★ New best RMSE: 1.2022
+Epoch 072/200 | Train Loss (norm): 0.086626 | LR: 0.009456
+  Val → MSE: 1.4422 | RMSE: 1.2009 | MAE: 0.9497 | R2: 0.3405
+  ★ New best RMSE: 1.2009
+Epoch 073/200 | Train Loss (norm): 0.086309 | LR: 0.009363
+  Val → MSE: 1.4410 | RMSE: 1.2004 | MAE: 0.9549 | R2: 0.3410
+  ★ New best RMSE: 1.2004
+Epoch 074/200 | Train Loss (norm): 0.086012 | LR: 0.009264
+  Val → MSE: 1.4380 | RMSE: 1.1992 | MAE: 0.9512 | R2: 0.3424
+  ★ New best RMSE: 1.1992
+Epoch 075/200 | Train Loss (norm): 0.085713 | LR: 0.009158
+  Val → MSE: 1.4363 | RMSE: 1.1984 | MAE: 0.9404 | R2: 0.3432
+  ★ New best RMSE: 1.1984
+Epoch 076/200 | Train Loss (norm): 0.085470 | LR: 0.009046
+  Val → MSE: 1.4358 | RMSE: 1.1983 | MAE: 0.9540 | R2: 0.3434
+  ★ New best RMSE: 1.1983
+Epoch 077/200 | Train Loss (norm): 0.085217 | LR: 0.008928
+  Val → MSE: 1.4390 | RMSE: 1.1996 | MAE: 0.9590 | R2: 0.3419
+  No improvement 1/30
+Epoch 078/200 | Train Loss (norm): 0.084988 | LR: 0.008803
+  Val → MSE: 1.4300 | RMSE: 1.1958 | MAE: 0.9478 | R2: 0.3461
+  ★ New best RMSE: 1.1958
+Epoch 079/200 | Train Loss (norm): 0.084726 | LR: 0.008673
+  Val → MSE: 1.4278 | RMSE: 1.1949 | MAE: 0.9353 | R2: 0.3471
+  ★ New best RMSE: 1.1949
+Epoch 080/200 | Train Loss (norm): 0.084526 | LR: 0.008537
+  Val → MSE: 1.4256 | RMSE: 1.1940 | MAE: 0.9423 | R2: 0.3481
+  ★ New best RMSE: 1.1940
+Epoch 081/200 | Train Loss (norm): 0.084301 | LR: 0.008396
+  Val → MSE: 1.4239 | RMSE: 1.1933 | MAE: 0.9371 | R2: 0.3489
+  ★ New best RMSE: 1.1933
+Epoch 082/200 | Train Loss (norm): 0.084097 | LR: 0.008249
+  Val → MSE: 1.4230 | RMSE: 1.1929 | MAE: 0.9314 | R2: 0.3493
+  ★ New best RMSE: 1.1929
+Epoch 083/200 | Train Loss (norm): 0.083921 | LR: 0.008097
+  Val → MSE: 1.4225 | RMSE: 1.1927 | MAE: 0.9433 | R2: 0.3495
+  ★ New best RMSE: 1.1927
+Epoch 084/200 | Train Loss (norm): 0.083736 | LR: 0.007941
+  Val → MSE: 1.4210 | RMSE: 1.1920 | MAE: 0.9407 | R2: 0.3502
+  ★ New best RMSE: 1.1920
+Epoch 085/200 | Train Loss (norm): 0.083566 | LR: 0.007780
+  Val → MSE: 1.4188 | RMSE: 1.1911 | MAE: 0.9332 | R2: 0.3512
+  ★ New best RMSE: 1.1911
+Epoch 086/200 | Train Loss (norm): 0.083425 | LR: 0.007615
+  Val → MSE: 1.4184 | RMSE: 1.1909 | MAE: 0.9304 | R2: 0.3514
+  ★ New best RMSE: 1.1909
+Epoch 087/200 | Train Loss (norm): 0.083255 | LR: 0.007446
+  Val → MSE: 1.4179 | RMSE: 1.1908 | MAE: 0.9380 | R2: 0.3516
+  ★ New best RMSE: 1.1908
+Epoch 088/200 | Train Loss (norm): 0.083107 | LR: 0.007273
+  Val → MSE: 1.4167 | RMSE: 1.1902 | MAE: 0.9371 | R2: 0.3522
+  ★ New best RMSE: 1.1902
+Epoch 089/200 | Train Loss (norm): 0.082993 | LR: 0.007096
+  Val → MSE: 1.4153 | RMSE: 1.1896 | MAE: 0.9328 | R2: 0.3528
+  ★ New best RMSE: 1.1896
+Epoch 090/200 | Train Loss (norm): 0.082841 | LR: 0.006917
+  Val → MSE: 1.4141 | RMSE: 1.1892 | MAE: 0.9303 | R2: 0.3533
+  ★ New best RMSE: 1.1892
+Epoch 091/200 | Train Loss (norm): 0.082727 | LR: 0.006734
+  Val → MSE: 1.4151 | RMSE: 1.1896 | MAE: 0.9308 | R2: 0.3529
+  No improvement 1/30
+Epoch 092/200 | Train Loss (norm): 0.082599 | LR: 0.006549
+  Val → MSE: 1.4128 | RMSE: 1.1886 | MAE: 0.9320 | R2: 0.3539
+  ★ New best RMSE: 1.1886
+Epoch 093/200 | Train Loss (norm): 0.082486 | LR: 0.006361
+  Val → MSE: 1.4134 | RMSE: 1.1889 | MAE: 0.9338 | R2: 0.3536
+  No improvement 1/30
+Epoch 094/200 | Train Loss (norm): 0.082417 | LR: 0.006171
+  Val → MSE: 1.4118 | RMSE: 1.1882 | MAE: 0.9329 | R2: 0.3544
+  ★ New best RMSE: 1.1882
+Epoch 095/200 | Train Loss (norm): 0.082287 | LR: 0.005979
+  Val → MSE: 1.4117 | RMSE: 1.1882 | MAE: 0.9319 | R2: 0.3544
+  No improvement 1/30
+Epoch 096/200 | Train Loss (norm): 0.082176 | LR: 0.005786
+  Val → MSE: 1.4110 | RMSE: 1.1878 | MAE: 0.9316 | R2: 0.3548
+  ★ New best RMSE: 1.1878
+Epoch 097/200 | Train Loss (norm): 0.082098 | LR: 0.005592
+  Val → MSE: 1.4118 | RMSE: 1.1882 | MAE: 0.9227 | R2: 0.3544
+  No improvement 1/30
+Epoch 098/200 | Train Loss (norm): 0.082009 | LR: 0.005397
+  Val → MSE: 1.4094 | RMSE: 1.1872 | MAE: 0.9284 | R2: 0.3555
+  ★ New best RMSE: 1.1872
+Epoch 099/200 | Train Loss (norm): 0.081906 | LR: 0.005201
+  Val → MSE: 1.4118 | RMSE: 1.1882 | MAE: 0.9357 | R2: 0.3544
+  No improvement 1/30
+Epoch 100/200 | Train Loss (norm): 0.081842 | LR: 0.005005
+  Val → MSE: 1.4092 | RMSE: 1.1871 | MAE: 0.9253 | R2: 0.3556
+  No improvement 2/30
+Epoch 101/200 | Train Loss (norm): 0.081765 | LR: 0.004809
+  Val → MSE: 1.4098 | RMSE: 1.1874 | MAE: 0.9320 | R2: 0.3553
+  No improvement 3/30
+Epoch 102/200 | Train Loss (norm): 0.081683 | LR: 0.004613
+  Val → MSE: 1.4104 | RMSE: 1.1876 | MAE: 0.9341 | R2: 0.3550
+  No improvement 4/30
+Epoch 103/200 | Train Loss (norm): 0.081633 | LR: 0.004418
+  Val → MSE: 1.4094 | RMSE: 1.1872 | MAE: 0.9320 | R2: 0.3555
+  No improvement 5/30
+Epoch 104/200 | Train Loss (norm): 0.081559 | LR: 0.004224
+  Val → MSE: 1.4082 | RMSE: 1.1867 | MAE: 0.9261 | R2: 0.3560
+  ★ New best RMSE: 1.1867
+Epoch 105/200 | Train Loss (norm): 0.081501 | LR: 0.004031
+  Val → MSE: 1.4096 | RMSE: 1.1873 | MAE: 0.9331 | R2: 0.3554
+  No improvement 1/30
+Epoch 106/200 | Train Loss (norm): 0.081421 | LR: 0.003839
+  Val → MSE: 1.4081 | RMSE: 1.1866 | MAE: 0.9305 | R2: 0.3561
+  No improvement 2/30
+Epoch 107/200 | Train Loss (norm): 0.081386 | LR: 0.003649
+  Val → MSE: 1.4078 | RMSE: 1.1865 | MAE: 0.9293 | R2: 0.3562
+  ★ New best RMSE: 1.1865
+Epoch 108/200 | Train Loss (norm): 0.081323 | LR: 0.003461
+  Val → MSE: 1.4074 | RMSE: 1.1863 | MAE: 0.9279 | R2: 0.3564
+  ★ New best RMSE: 1.1863
+Epoch 109/200 | Train Loss (norm): 0.081257 | LR: 0.003276
+  Val → MSE: 1.4077 | RMSE: 1.1865 | MAE: 0.9294 | R2: 0.3563
+  No improvement 1/30
+Epoch 110/200 | Train Loss (norm): 0.081224 | LR: 0.003093
+  Val → MSE: 1.4066 | RMSE: 1.1860 | MAE: 0.9241 | R2: 0.3568
+  ★ New best RMSE: 1.1860
+Epoch 111/200 | Train Loss (norm): 0.081187 | LR: 0.002914
+  Val → MSE: 1.4071 | RMSE: 1.1862 | MAE: 0.9269 | R2: 0.3565
+  No improvement 1/30
+Epoch 112/200 | Train Loss (norm): 0.081160 | LR: 0.002737
+  Val → MSE: 1.4064 | RMSE: 1.1859 | MAE: 0.9238 | R2: 0.3568
+  No improvement 2/30
+Epoch 113/200 | Train Loss (norm): 0.081101 | LR: 0.002564
+  Val → MSE: 1.4072 | RMSE: 1.1863 | MAE: 0.9210 | R2: 0.3565
+  No improvement 3/30
+Epoch 114/200 | Train Loss (norm): 0.081069 | LR: 0.002395
+  Val → MSE: 1.4076 | RMSE: 1.1864 | MAE: 0.9298 | R2: 0.3563
+  No improvement 4/30
+Epoch 115/200 | Train Loss (norm): 0.081022 | LR: 0.002230
+  Val → MSE: 1.4085 | RMSE: 1.1868 | MAE: 0.9326 | R2: 0.3559
+  No improvement 5/30
+Epoch 116/200 | Train Loss (norm): 0.081002 | LR: 0.002069
+  Val → MSE: 1.4060 | RMSE: 1.1858 | MAE: 0.9237 | R2: 0.3570
+  ★ New best RMSE: 1.1858
+Epoch 117/200 | Train Loss (norm): 0.080956 | LR: 0.001913
+  Val → MSE: 1.4057 | RMSE: 1.1856 | MAE: 0.9243 | R2: 0.3572
+  ★ New best RMSE: 1.1856
+Epoch 118/200 | Train Loss (norm): 0.080928 | LR: 0.001761
+  Val → MSE: 1.4059 | RMSE: 1.1857 | MAE: 0.9225 | R2: 0.3571
+  No improvement 1/30
+Epoch 119/200 | Train Loss (norm): 0.080905 | LR: 0.001614
+  Val → MSE: 1.4055 | RMSE: 1.1856 | MAE: 0.9243 | R2: 0.3572
+  No improvement 2/30
+Epoch 120/200 | Train Loss (norm): 0.080881 | LR: 0.001473
+  Val → MSE: 1.4064 | RMSE: 1.1859 | MAE: 0.9277 | R2: 0.3568
+  No improvement 3/30
+Epoch 121/200 | Train Loss (norm): 0.080846 | LR: 0.001337
+  Val → MSE: 1.4059 | RMSE: 1.1857 | MAE: 0.9264 | R2: 0.3571
+  No improvement 4/30
+Epoch 122/200 | Train Loss (norm): 0.080825 | LR: 0.001207
+  Val → MSE: 1.4063 | RMSE: 1.1859 | MAE: 0.9274 | R2: 0.3569
+  No improvement 5/30
+Epoch 123/200 | Train Loss (norm): 0.080814 | LR: 0.001082
+  Val → MSE: 1.4056 | RMSE: 1.1856 | MAE: 0.9236 | R2: 0.3572
+  No improvement 6/30
+Epoch 124/200 | Train Loss (norm): 0.080792 | LR: 0.000964
+  Val → MSE: 1.4058 | RMSE: 1.1857 | MAE: 0.9258 | R2: 0.3571
+  No improvement 7/30
+Epoch 125/200 | Train Loss (norm): 0.080782 | LR: 0.000852
+  Val → MSE: 1.4058 | RMSE: 1.1856 | MAE: 0.9270 | R2: 0.3571
+  No improvement 8/30
+Epoch 126/200 | Train Loss (norm): 0.080766 | LR: 0.000746
+  Val → MSE: 1.4056 | RMSE: 1.1856 | MAE: 0.9267 | R2: 0.3572
+  No improvement 9/30
+Epoch 127/200 | Train Loss (norm): 0.080728 | LR: 0.000647
+  Val → MSE: 1.4055 | RMSE: 1.1856 | MAE: 0.9242 | R2: 0.3572
+  No improvement 10/30
+Epoch 128/200 | Train Loss (norm): 0.080734 | LR: 0.000554
+  Val → MSE: 1.4056 | RMSE: 1.1856 | MAE: 0.9225 | R2: 0.3572
+  No improvement 11/30
+Epoch 129/200 | Train Loss (norm): 0.080733 | LR: 0.000469
+  Val → MSE: 1.4051 | RMSE: 1.1854 | MAE: 0.9233 | R2: 0.3574
+  ★ New best RMSE: 1.1854
+Epoch 130/200 | Train Loss (norm): 0.080699 | LR: 0.000390
+  Val → MSE: 1.4054 | RMSE: 1.1855 | MAE: 0.9257 | R2: 0.3573
+  No improvement 1/30
+Epoch 131/200 | Train Loss (norm): 0.080693 | LR: 0.000319
+  Val → MSE: 1.4053 | RMSE: 1.1854 | MAE: 0.9248 | R2: 0.3574
+  No improvement 2/30
+Epoch 132/200 | Train Loss (norm): 0.080690 | LR: 0.000254
+  Val → MSE: 1.4057 | RMSE: 1.1856 | MAE: 0.9275 | R2: 0.3572
+  No improvement 3/30
+Epoch 133/200 | Train Loss (norm): 0.080691 | LR: 0.000198
+  Val → MSE: 1.4052 | RMSE: 1.1854 | MAE: 0.9247 | R2: 0.3574
+  No improvement 4/30
+Epoch 134/200 | Train Loss (norm): 0.080664 | LR: 0.000148
+  Val → MSE: 1.4053 | RMSE: 1.1855 | MAE: 0.9246 | R2: 0.3574
+  No improvement 5/30
+Epoch 135/200 | Train Loss (norm): 0.080665 | LR: 0.000106
+  Val → MSE: 1.4057 | RMSE: 1.1856 | MAE: 0.9267 | R2: 0.3572
+  No improvement 6/30
+Epoch 136/200 | Train Loss (norm): 0.080667 | LR: 0.000071
+  Val → MSE: 1.4054 | RMSE: 1.1855 | MAE: 0.9253 | R2: 0.3573
+  No improvement 7/30
+Epoch 137/200 | Train Loss (norm): 0.080657 | LR: 0.000045
+  Val → MSE: 1.4054 | RMSE: 1.1855 | MAE: 0.9257 | R2: 0.3573
+  No improvement 8/30
+Epoch 138/200 | Train Loss (norm): 0.080655 | LR: 0.000025
+  Val → MSE: 1.4054 | RMSE: 1.1855 | MAE: 0.9255 | R2: 0.3573
+  No improvement 9/30
+Epoch 139/200 | Train Loss (norm): 0.080670 | LR: 0.000014
+  Val → MSE: 1.4054 | RMSE: 1.1855 | MAE: 0.9257 | R2: 0.3573
+  No improvement 10/30
+Epoch 140/200 | Train Loss (norm): 0.080647 | LR: 0.010000
+  Val → MSE: 1.4053 | RMSE: 1.1854 | MAE: 0.9251 | R2: 0.3574
+  No improvement 11/30
+Epoch 141/200 | Train Loss (norm): 0.081203 | LR: 0.009999
+  Val → MSE: 1.4062 | RMSE: 1.1858 | MAE: 0.9235 | R2: 0.3570
+  No improvement 12/30
+Epoch 142/200 | Train Loss (norm): 0.081130 | LR: 0.009996
+  Val → MSE: 1.4074 | RMSE: 1.1863 | MAE: 0.9293 | R2: 0.3564
+  No improvement 13/30
+Epoch 143/200 | Train Loss (norm): 0.081041 | LR: 0.009991
+  Val → MSE: 1.4049 | RMSE: 1.1853 | MAE: 0.9194 | R2: 0.3576
+  ★ New best RMSE: 1.1853
+Epoch 144/200 | Train Loss (norm): 0.080961 | LR: 0.009985
+  Val → MSE: 1.4154 | RMSE: 1.1897 | MAE: 0.9122 | R2: 0.3527
+  No improvement 1/30
+Epoch 145/200 | Train Loss (norm): 0.080885 | LR: 0.009976
+  Val → MSE: 1.4055 | RMSE: 1.1855 | MAE: 0.9176 | R2: 0.3573
+  No improvement 2/30
+Epoch 146/200 | Train Loss (norm): 0.080806 | LR: 0.009965
+  Val → MSE: 1.4052 | RMSE: 1.1854 | MAE: 0.9233 | R2: 0.3574
+  No improvement 3/30
+Epoch 147/200 | Train Loss (norm): 0.080750 | LR: 0.009953
+  Val → MSE: 1.4060 | RMSE: 1.1858 | MAE: 0.9293 | R2: 0.3570
+  No improvement 4/30
+Epoch 148/200 | Train Loss (norm): 0.080659 | LR: 0.009939
+  Val → MSE: 1.4068 | RMSE: 1.1861 | MAE: 0.9166 | R2: 0.3567
+  No improvement 5/30
+Epoch 149/200 | Train Loss (norm): 0.080588 | LR: 0.009922
+  Val → MSE: 1.4062 | RMSE: 1.1858 | MAE: 0.9134 | R2: 0.3569
+  No improvement 6/30
+Epoch 150/200 | Train Loss (norm): 0.080536 | LR: 0.009904
+  Val → MSE: 1.4036 | RMSE: 1.1847 | MAE: 0.9210 | R2: 0.3581
+  ★ New best RMSE: 1.1847
+Epoch 151/200 | Train Loss (norm): 0.080449 | LR: 0.009884
+  Val → MSE: 1.4034 | RMSE: 1.1846 | MAE: 0.9207 | R2: 0.3582
+  No improvement 1/30
+Epoch 152/200 | Train Loss (norm): 0.080375 | LR: 0.009862
+  Val → MSE: 1.4071 | RMSE: 1.1862 | MAE: 0.9315 | R2: 0.3565
+  No improvement 2/30
+Epoch 153/200 | Train Loss (norm): 0.080310 | LR: 0.009838
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9208 | R2: 0.3588
+  ★ New best RMSE: 1.1841
+Epoch 154/200 | Train Loss (norm): 0.080270 | LR: 0.009812
+  Val → MSE: 1.4027 | RMSE: 1.1844 | MAE: 0.9183 | R2: 0.3585
+  No improvement 1/30
+Epoch 155/200 | Train Loss (norm): 0.080196 | LR: 0.009785
+  Val → MSE: 1.4042 | RMSE: 1.1850 | MAE: 0.9266 | R2: 0.3579
+  No improvement 2/30
+Epoch 156/200 | Train Loss (norm): 0.080144 | LR: 0.009756
+  Val → MSE: 1.4029 | RMSE: 1.1845 | MAE: 0.9210 | R2: 0.3584
+  No improvement 3/30
+Epoch 157/200 | Train Loss (norm): 0.080064 | LR: 0.009724
+  Val → MSE: 1.4032 | RMSE: 1.1846 | MAE: 0.9143 | R2: 0.3583
+  No improvement 4/30
+Epoch 158/200 | Train Loss (norm): 0.080012 | LR: 0.009691
+  Val → MSE: 1.4042 | RMSE: 1.1850 | MAE: 0.9135 | R2: 0.3579
+  No improvement 5/30
+Epoch 159/200 | Train Loss (norm): 0.079975 | LR: 0.009656
+  Val → MSE: 1.4048 | RMSE: 1.1853 | MAE: 0.9182 | R2: 0.3576
+  No improvement 6/30
+Epoch 160/200 | Train Loss (norm): 0.079919 | LR: 0.009620
+  Val → MSE: 1.4056 | RMSE: 1.1856 | MAE: 0.9294 | R2: 0.3572
+  No improvement 7/30
+Epoch 161/200 | Train Loss (norm): 0.079853 | LR: 0.009581
+  Val → MSE: 1.4032 | RMSE: 1.1846 | MAE: 0.9196 | R2: 0.3583
+  No improvement 8/30
+Epoch 162/200 | Train Loss (norm): 0.079821 | LR: 0.009541
+  Val → MSE: 1.4050 | RMSE: 1.1853 | MAE: 0.9240 | R2: 0.3575
+  No improvement 9/30
+Epoch 163/200 | Train Loss (norm): 0.079775 | LR: 0.009499
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9185 | R2: 0.3588
+  No improvement 10/30
+Epoch 164/200 | Train Loss (norm): 0.079713 | LR: 0.009456
+  Val → MSE: 1.4034 | RMSE: 1.1846 | MAE: 0.9143 | R2: 0.3582
+  No improvement 11/30
+Epoch 165/200 | Train Loss (norm): 0.079676 | LR: 0.009410
+  Val → MSE: 1.4076 | RMSE: 1.1864 | MAE: 0.9079 | R2: 0.3563
+  No improvement 12/30
+Epoch 166/200 | Train Loss (norm): 0.079624 | LR: 0.009363
+  Val → MSE: 1.4039 | RMSE: 1.1848 | MAE: 0.9221 | R2: 0.3580
+  No improvement 13/30
+Epoch 167/200 | Train Loss (norm): 0.079573 | LR: 0.009314
+  Val → MSE: 1.4013 | RMSE: 1.1838 | MAE: 0.9185 | R2: 0.3592
+  ★ New best RMSE: 1.1838
+Epoch 168/200 | Train Loss (norm): 0.079528 | LR: 0.009264
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9187 | R2: 0.3588
+  No improvement 1/30
+Epoch 169/200 | Train Loss (norm): 0.079499 | LR: 0.009212
+  Val → MSE: 1.4036 | RMSE: 1.1847 | MAE: 0.9212 | R2: 0.3581
+  No improvement 2/30
+Epoch 170/200 | Train Loss (norm): 0.079448 | LR: 0.009158
+  Val → MSE: 1.4042 | RMSE: 1.1850 | MAE: 0.9159 | R2: 0.3579
+  No improvement 3/30
+Epoch 171/200 | Train Loss (norm): 0.079385 | LR: 0.009103
+  Val → MSE: 1.4015 | RMSE: 1.1838 | MAE: 0.9171 | R2: 0.3591
+  No improvement 4/30
+Epoch 172/200 | Train Loss (norm): 0.079370 | LR: 0.009046
+  Val → MSE: 1.4016 | RMSE: 1.1839 | MAE: 0.9162 | R2: 0.3590
+  No improvement 5/30
+Epoch 173/200 | Train Loss (norm): 0.079316 | LR: 0.008988
+  Val → MSE: 1.4015 | RMSE: 1.1838 | MAE: 0.9213 | R2: 0.3591
+  No improvement 6/30
+Epoch 174/200 | Train Loss (norm): 0.079282 | LR: 0.008928
+  Val → MSE: 1.4016 | RMSE: 1.1839 | MAE: 0.9211 | R2: 0.3590
+  No improvement 7/30
+Epoch 175/200 | Train Loss (norm): 0.079236 | LR: 0.008866
+  Val → MSE: 1.4011 | RMSE: 1.1837 | MAE: 0.9197 | R2: 0.3593
+  No improvement 8/30
+Epoch 176/200 | Train Loss (norm): 0.079196 | LR: 0.008803
+  Val → MSE: 1.4037 | RMSE: 1.1848 | MAE: 0.9241 | R2: 0.3581
+  No improvement 9/30
+Epoch 177/200 | Train Loss (norm): 0.079159 | LR: 0.008739
+  Val → MSE: 1.4014 | RMSE: 1.1838 | MAE: 0.9155 | R2: 0.3591
+  No improvement 10/30
+Epoch 178/200 | Train Loss (norm): 0.079122 | LR: 0.008673
+  Val → MSE: 1.4082 | RMSE: 1.1867 | MAE: 0.9074 | R2: 0.3560
+  No improvement 11/30
+Epoch 179/200 | Train Loss (norm): 0.079077 | LR: 0.008606
+  Val → MSE: 1.4040 | RMSE: 1.1849 | MAE: 0.9254 | R2: 0.3580
+  No improvement 12/30
+Epoch 180/200 | Train Loss (norm): 0.079064 | LR: 0.008537
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9199 | R2: 0.3588
+  No improvement 13/30
+Epoch 181/200 | Train Loss (norm): 0.079014 | LR: 0.008467
+  Val → MSE: 1.4012 | RMSE: 1.1837 | MAE: 0.9143 | R2: 0.3592
+  No improvement 14/30
+Epoch 182/200 | Train Loss (norm): 0.078995 | LR: 0.008396
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9202 | R2: 0.3588
+  No improvement 15/30
+Epoch 183/200 | Train Loss (norm): 0.078953 | LR: 0.008323
+  Val → MSE: 1.4038 | RMSE: 1.1848 | MAE: 0.9173 | R2: 0.3580
+  No improvement 16/30
+Epoch 184/200 | Train Loss (norm): 0.078923 | LR: 0.008249
+  Val → MSE: 1.4097 | RMSE: 1.1873 | MAE: 0.9326 | R2: 0.3553
+  No improvement 17/30
+Epoch 185/200 | Train Loss (norm): 0.078882 | LR: 0.008174
+  Val → MSE: 1.4016 | RMSE: 1.1839 | MAE: 0.9171 | R2: 0.3591
+  No improvement 18/30
+Epoch 186/200 | Train Loss (norm): 0.078849 | LR: 0.008097
+  Val → MSE: 1.4020 | RMSE: 1.1840 | MAE: 0.9169 | R2: 0.3589
+  No improvement 19/30
+Epoch 187/200 | Train Loss (norm): 0.078813 | LR: 0.008020
+  Val → MSE: 1.4063 | RMSE: 1.1859 | MAE: 0.9277 | R2: 0.3569
+  No improvement 20/30
+Epoch 188/200 | Train Loss (norm): 0.078783 | LR: 0.007941
+  Val → MSE: 1.4025 | RMSE: 1.1843 | MAE: 0.9156 | R2: 0.3587
+  No improvement 21/30
+Epoch 189/200 | Train Loss (norm): 0.078744 | LR: 0.007861
+  Val → MSE: 1.4039 | RMSE: 1.1849 | MAE: 0.9241 | R2: 0.3580
+  No improvement 22/30
+Epoch 190/200 | Train Loss (norm): 0.078717 | LR: 0.007780
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9121 | R2: 0.3588
+  No improvement 23/30
+Epoch 191/200 | Train Loss (norm): 0.078705 | LR: 0.007698
+  Val → MSE: 1.4022 | RMSE: 1.1841 | MAE: 0.9149 | R2: 0.3588
+  No improvement 24/30
+Epoch 192/200 | Train Loss (norm): 0.078666 | LR: 0.007615
+  Val → MSE: 1.4013 | RMSE: 1.1838 | MAE: 0.9183 | R2: 0.3592
+  No improvement 25/30
+Epoch 193/200 | Train Loss (norm): 0.078620 | LR: 0.007531
+  Val → MSE: 1.4040 | RMSE: 1.1849 | MAE: 0.9078 | R2: 0.3580
+  No improvement 26/30
+Epoch 194/200 | Train Loss (norm): 0.078600 | LR: 0.007446
+  Val → MSE: 1.4063 | RMSE: 1.1859 | MAE: 0.9072 | R2: 0.3569
+  No improvement 27/30
+Epoch 195/200 | Train Loss (norm): 0.078590 | LR: 0.007360
+  Val → MSE: 1.4024 | RMSE: 1.1842 | MAE: 0.9110 | R2: 0.3587
+  No improvement 28/30
+Epoch 196/200 | Train Loss (norm): 0.078545 | LR: 0.007273
+  Val → MSE: 1.4024 | RMSE: 1.1842 | MAE: 0.9126 | R2: 0.3587
+  No improvement 29/30
+Epoch 197/200 | Train Loss (norm): 0.078520 | LR: 0.007185
+  Val → MSE: 1.4023 | RMSE: 1.1842 | MAE: 0.9169 | R2: 0.3587
+  No improvement 30/30
+
+Early stopping tại epoch 197
+
+Loaded best model (epoch 167, Val RMSE: 1.1838)
+
+============================================================
+FM FINAL EVALUATION (scale gốc [1,5])
+============================================================
+
+Train Set:
+  MSE: 1.2308 | RMSE: 1.1094 | MAE: 0.8593 | R2: 0.4372
+
+Val Set:
+  MSE: 1.4013 | RMSE: 1.1838 | MAE: 0.9185 | R2: 0.3592
+
+Test Set:
+  MSE: 1.4000 | RMSE: 1.1832 | MAE: 0.9172 | R2: 0.3589
+
+============================================================
+PIPELINE COMPLETE
+============================================================
+Best FM Val RMSE  : 1.1838
+Best FM Epoch     : 167
+
+============================================================
+SAVING OUTPUTS → /kaggle/working/
+============================================================
+  ✓ FM model       → /kaggle/working/fm_model.pt
+  ✓ ID maps        → /kaggle/working/id_maps.pkl
+  ✓ FM history     → /kaggle/working/fm_history.json
+  ✓ Model info     → /kaggle/working/model_info.json
+
+  Tất cả outputs đã lưu vào: /kaggle/working/

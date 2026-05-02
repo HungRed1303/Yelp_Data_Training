@@ -1,0 +1,1017 @@
+# =========================================================
+# IMPORT
+# =========================================================
+import json
+import orjson
+import math
+import copy
+import os
+import pickle
+import random
+import numpy as np
+from collections import Counter
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from datetime import datetime
+
+
+
+# =========================================================
+# CONSTANTS
+# =========================================================
+USER_CTX_DIM  = 9
+BIZ_CTX_DIM   = 6   
+TIP_DIM       = 3
+CHECKIN_DIM   = 2
+REVIEW_DIM    = 4
+TEMPORAL_DIM  = 5   
+COLD_DIM      = 0   
+
+NUM_DIM = (
+    USER_CTX_DIM + BIZ_CTX_DIM
+    + TIP_DIM * 2
+    + CHECKIN_DIM
+    + REVIEW_DIM
+    + TEMPORAL_DIM
+    + COLD_DIM
+)  # Tổng bây giờ là 32
+
+FEAT_NAMES = [
+    # user_ctx (9)
+    "u_review_count", "u_fans", "u_useful",
+    "u_funny", "u_cool", "u_years_active", "u_elite",
+    "u_friend_count", "u_compliments",
+    
+    # biz_ctx (6) 
+    "b_review_count", "b_is_open", 
+    "b_lat", "b_lon", 
+    "b_cat_count", "b_open_days",
+    
+    # tip (6)
+    "ut_count", "ut_avg_len", "ut_avg_comp",
+    "bt_count", "bt_avg_len", "bt_avg_comp",
+    
+    # checkin (2)
+    "ck_count", "ck_density",
+    
+    # review (4)
+    "r_useful", "r_funny", "r_cool", "r_text_len",
+    
+    # temporal (5)
+    "t_year", "t_month", "t_day", "t_weekday", "t_hour",
+]
+
+# Target normalization constants
+TARGET_MIN   = 1.0
+TARGET_MAX   = 5.0
+TARGET_RANGE = TARGET_MAX - TARGET_MIN  # = 4.0
+
+COLD_START_THRESHOLD = 5  # user/biz với ≤5 reviews = cold
+WARMUP_EPOCHS = 5          # linear warmup cho SGD Nesterov
+
+
+def normalize_target(rating):
+    """Scale rating [1, 5]→ [0, 1]"""
+    return (rating - TARGET_MIN) / TARGET_RANGE
+
+
+def denormalize_target(pred):
+    """Scale prediction [0, 1] → [1, 5]"""
+    return pred * TARGET_RANGE + TARGET_MIN
+
+
+# =========================================================
+# ID MAPPER
+# =========================================================
+class IDMapper:
+    def __init__(self):
+        self.map = {}
+
+    def get(self, key):
+        if key not in self.map:
+            self.map[key] = len(self.map)
+        return self.map[key]
+
+
+# =========================================================
+# LOAD USER CONTEXT
+# =========================================================
+def load_user_context(path):
+    ctx = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            u = json.loads(line)
+
+            try:
+                dt = datetime.strptime(
+                    u.get("yelping_since", "2015-01-01 00:00:00"),
+                    "%Y-%m-%d %H:%M:%S"
+                )
+                years_active = max(0.0, (2020 - dt.year) / 10.0)
+            except Exception:
+                years_active = 0.5
+
+            elite_str = u.get("elite", "")
+            if isinstance(elite_str, list):
+                elite_count = len(elite_str)
+            else:
+                elite_count = len(elite_str.split(",")) if elite_str else 0
+
+            friends = u.get("friends", "")
+            if isinstance(friends, str) and friends and friends != "None":
+                friend_count = len([f for f in friends.split(",") if f.strip()])
+            else:
+                friend_count = 0
+
+            compliment_keys = [
+                "compliment_hot", "compliment_more", "compliment_profile",
+                "compliment_cute", "compliment_list", "compliment_note",
+                "compliment_plain", "compliment_cool", "compliment_funny",
+                "compliment_writer", "compliment_photos"
+            ]
+            total_compliments = sum(u.get(k, 0) or 0 for k in compliment_keys)
+
+            ctx[u["user_id"]] = [
+                math.log1p(u.get("review_count", 0)) / 10.0,
+                math.log1p(u.get("fans", 0)) / 10.0,
+                math.log1p(max(0, u.get("useful", 0) or 0)) / 10.0,
+                math.log1p(max(0, u.get("funny",  0) or 0)) / 10.0,
+                math.log1p(max(0, u.get("cool",   0) or 0)) / 10.0,
+                years_active,
+                math.log1p(elite_count) / 10.0,
+                math.log1p(friend_count) / 10.0,
+                math.log1p(total_compliments) / 10.0,
+            ]
+    return ctx
+
+
+# =========================================================
+# LOAD BUSINESS CONTEXT
+# =========================================================
+def load_business_context(path):
+    ctx = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            b = json.loads(line)
+            categories = b.get("categories", "")
+            cat_count  = len(categories.split(",")) if categories else 0
+            hours      = b.get("hours", {})
+            open_days  = len(hours) if hours else 0
+
+            lat = b.get("latitude", 0)
+            lon = b.get("longitude", 0)
+
+            ctx[b["business_id"]] = [
+                math.log1p(b.get("review_count", 0)) / 10.0,
+                float(b.get("is_open", 0)),
+                lat / 90.0,
+                lon / 180.0,
+                math.log1p(cat_count) / 10.0,
+                open_days / 7.0,
+            ]
+    return ctx
+
+
+# =========================================================
+# LOAD CHECKIN CONTEXT
+# =========================================================
+def load_checkin_context(path):
+    ctx = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            c   = json.loads(line)
+            bid = c["business_id"]
+            dates = c.get("date", "")
+            if dates:
+                times   = dates.split(", ")
+                count   = len(times)
+                density = count / 30.0
+            else:
+                count = density = 0
+            ctx[bid] = [
+                math.log1p(count) / 10.0,
+                density,
+            ]
+    return ctx
+
+
+# =========================================================
+# LOAD TIP CONTEXT
+# =========================================================
+def load_tip_context(path):
+    user_tip = {}
+    biz_tip  = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            t      = json.loads(line)
+            uid    = t["user_id"]
+            bid    = t["business_id"]
+            length = len(t.get("text", ""))
+            comp   = t.get("compliment_count", 0)
+
+            if uid not in user_tip:
+                user_tip[uid] = [0, 0, 0]
+            user_tip[uid][0] += 1
+            user_tip[uid][1] += length
+            user_tip[uid][2] += comp
+
+            if bid not in biz_tip:
+                biz_tip[bid] = [0, 0, 0]
+            biz_tip[bid][0] += 1
+            biz_tip[bid][1] += length
+            biz_tip[bid][2] += comp
+
+    return user_tip, biz_tip
+
+
+# =========================================================
+# LOAD ALL DATA INTO MEMORY (vectorized + cached)
+# =========================================================
+def load_all_data(
+    review_path,
+    user_ctx,
+    biz_ctx,
+    user_tip,
+    biz_tip,
+    checkin_ctx,
+    max_reviews=None,
+    cold_threshold=COLD_START_THRESHOLD,
+    cache_dir="/kaggle/working",
+):
+    import pandas as pd
+
+    cache_file = os.path.join(cache_dir, "dataset_cache.npz")
+    map_file   = os.path.join(cache_dir, "dataset_cache_maps.pkl")
+
+    if max_reviews is None and os.path.exists(cache_file) and os.path.exists(map_file):
+        print("  Loading dataset from cache...")
+        try:
+            d = np.load(cache_file)
+            all_data = TensorDataset(
+                torch.from_numpy(d["users"]).long(),
+                torch.from_numpy(d["bizs"]).long(),
+                torch.from_numpy(d["num"]),
+                torch.from_numpy(d["ratings"]),
+                torch.from_numpy(d["coldu"]),
+                torch.from_numpy(d["coldb"]),
+            )
+            with open(map_file, "rb") as f:
+                maps = pickle.load(f)
+            print(f"  Cache loaded: {len(all_data):,} samples")
+            return (all_data, maps["user_map"], maps["biz_map"],
+                    maps["user_counts"], maps["biz_counts"])
+        except Exception as e:
+            print(f"  Cache load failed: {e}. Rebuilding...")
+
+    print("  [Single Pass] Reading reviews + counting...")
+    user_counts = Counter()
+    biz_counts  = Counter()
+    user_map = IDMapper()
+    biz_map  = IDMapper()
+    uid_list = []
+    bid_list = []
+    useful_list = []
+    funny_list = []
+    cool_list = []
+    text_len_list = []
+    stars_list = []
+    date_list = []
+
+    with open(review_path, "rb") as f:
+        for i, line in enumerate(f):
+            if max_reviews and i >= max_reviews:
+                break
+            r = orjson.loads(line)
+            uid = r["user_id"]
+            bid = r["business_id"]
+
+            user_counts[uid] += 1
+            biz_counts[bid]  += 1
+            uid_list.append(user_map.get(uid))
+            bid_list.append(biz_map.get(bid))
+
+            useful_list.append(r.get("useful", 0) or 0)
+            funny_list.append(r.get("funny", 0) or 0)
+            cool_list.append(r.get("cool", 0) or 0)
+            text_len_list.append(len(r.get("text", "") or ""))
+            stars_list.append(r["stars"])
+            date_list.append(r["date"])
+
+    N = len(uid_list)
+    n_users = len(user_map.map)
+    n_bizs  = len(biz_map.map)
+    print(f"  {N:,} reviews loaded. Vectorizing features...")
+
+    # ── ID arrays ─────────────────────────────────────────
+    users_arr = np.array(uid_list, dtype=np.int64)
+    bizs_arr  = np.array(bid_list, dtype=np.int64)
+
+    # ── Lookup matrices (build once, index O(N) numpy) ────
+    user_mat = np.zeros((n_users, USER_CTX_DIM), dtype=np.float32)
+    for uid, feats in user_ctx.items():
+        if uid in user_map.map:
+            user_mat[user_map.map[uid]] = feats
+
+    biz_mat = np.zeros((n_bizs, BIZ_CTX_DIM), dtype=np.float32)
+    for bid, feats in biz_ctx.items():
+        if bid in biz_map.map:
+            biz_mat[biz_map.map[bid]] = feats
+
+    utip_mat = np.zeros((n_users, 3), dtype=np.float32)
+    for uid, t in user_tip.items():
+        if uid in user_map.map:
+            cnt = max(t[0], 1)
+            utip_mat[user_map.map[uid]] = [
+                math.log1p(t[0]) / 10.0,
+                math.log1p(t[1] / cnt) / 10.0,
+                math.log1p(t[2] / cnt) / 10.0,
+            ]
+
+    btip_mat = np.zeros((n_bizs, 3), dtype=np.float32)
+    for bid, t in biz_tip.items():
+        if bid in biz_map.map:
+            cnt = max(t[0], 1)
+            btip_mat[biz_map.map[bid]] = [
+                math.log1p(t[0]) / 10.0,
+                math.log1p(t[1] / cnt) / 10.0,
+                math.log1p(t[2] / cnt) / 10.0,
+            ]
+
+    ck_mat = np.zeros((n_bizs, 2), dtype=np.float32)
+    for bid, c in checkin_ctx.items():
+        if bid in biz_map.map:
+            ck_mat[biz_map.map[bid]] = [c[0], math.log1p(c[1]) / 10.0]
+
+    # ── Vectorized indexing ───────────────────────────────
+    user_feat = user_mat[users_arr]   # (N, 9)
+    biz_feat  = biz_mat[bizs_arr]     # (N, 6)
+    utip_feat = utip_mat[users_arr]   # (N, 3)
+    btip_feat = btip_mat[bizs_arr]    # (N, 3)
+    ck_feat   = ck_mat[bizs_arr]      # (N, 2)
+
+    # ── Review features (vectorized log1p) ────────────────
+    useful   = np.array([max(0, x) for x in useful_list], dtype=np.float32)
+    funny    = np.array([max(0, x) for x in funny_list], dtype=np.float32)
+    cool     = np.array([max(0, x) for x in cool_list], dtype=np.float32)
+    text_len = np.array(text_len_list, dtype=np.float32)
+
+    review_feat = np.stack([
+        np.log1p(useful)   / 10.0,
+        np.log1p(funny)    / 10.0,
+        np.log1p(cool)     / 10.0,
+        np.log1p(text_len) / 10.0,
+    ], axis=1)  # (N, 4)
+
+    # ── Temporal (pandas vectorized — 10-20x faster) ──────
+    dts = pd.to_datetime(date_list)
+    temporal_feat = np.stack([
+        (dts.year - 2015).values / 10.0,
+        dts.month.values  / 12.0,
+        dts.day.values    / 31.0,
+        dts.weekday.values / 7.0,
+        dts.hour.values   / 24.0,
+    ], axis=1).astype(np.float32)  # (N, 5)
+
+    # ── Concatenate all 32 features ───────────────────────
+    num_arr = np.concatenate([
+        user_feat, biz_feat,
+        utip_feat, btip_feat,
+        ck_feat,
+        review_feat,
+        temporal_feat,
+    ], axis=1)  # (N, 32)
+
+    # ── Cold start (vectorized bincount) ──────────────────
+    u_cnts = np.bincount(users_arr, minlength=n_users)
+    b_cnts = np.bincount(bizs_arr,  minlength=n_bizs)
+    coldu_arr = (u_cnts[users_arr] <= cold_threshold).astype(np.float32)
+    coldb_arr = (b_cnts[bizs_arr]  <= cold_threshold).astype(np.float32)
+
+    # ── Ratings normalized ────────────────────────────────
+    ratings = np.array(stars_list, dtype=np.float32)
+    ratings_arr = ((ratings - TARGET_MIN) / TARGET_RANGE).astype(np.float32)
+
+    # ── Free memory to reclaim ~3-5GB ───────────────────
+    del uid_list, bid_list, useful_list, funny_list, cool_list, text_len_list, stars_list, date_list
+
+    # ── Build TensorDataset ───────────────────────────────
+    all_data = TensorDataset(
+        torch.from_numpy(users_arr).long(),
+        torch.from_numpy(bizs_arr).long(),
+        torch.from_numpy(num_arr),
+        torch.from_numpy(ratings_arr),
+        torch.from_numpy(coldu_arr),
+        torch.from_numpy(coldb_arr),
+    )
+
+    # ── Cache for next run ────────────────────────────────
+    if max_reviews is None:
+        os.makedirs(cache_dir, exist_ok=True)
+        print(f"  Caching to {cache_file}...")
+        np.savez_compressed(
+            cache_file,
+            users=users_arr, bizs=bizs_arr, num=num_arr,
+            ratings=ratings_arr, coldu=coldu_arr, coldb=coldb_arr,
+        )
+        with open(map_file, "wb") as f:
+            pickle.dump({
+                "user_map": user_map, "biz_map": biz_map,
+                "user_counts": user_counts, "biz_counts": biz_counts,
+            }, f)
+
+    return all_data, user_map, biz_map, user_counts, biz_counts
+
+
+# =========================================================
+# FM MODEL — với Cold Start Fallback, NUM_DIM = 32
+# =========================================================
+class FMModel(nn.Module):
+    def __init__(self, n_user, n_business, num_dim=NUM_DIM, k=64, dropout=0.15):
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.k       = k
+        self.num_dim = num_dim
+
+        # Linear terms
+        self.bias     = nn.Parameter(torch.tensor([0.5]))
+        self.user_lin = nn.Embedding(n_user, 1)
+        self.biz_lin  = nn.Embedding(n_business, 1)
+        self.num_lin  = nn.Parameter(torch.zeros(num_dim))
+
+        # Interaction embeddings
+        self.user_emb = nn.Embedding(n_user, k)
+        self.biz_emb  = nn.Embedding(n_business, k)
+        self.num_emb  = nn.Parameter(torch.zeros(num_dim, k))
+
+        # Cold start fallback embeddings
+        self.avg_user_emb = nn.Parameter(torch.zeros(k))
+        self.avg_biz_emb  = nn.Parameter(torch.zeros(k))
+        self.avg_user_lin = nn.Parameter(torch.zeros(1))
+        self.avg_biz_lin  = nn.Parameter(torch.zeros(1))
+
+        nn.init.normal_(self.user_lin.weight, 0, 0.01)
+        nn.init.normal_(self.biz_lin.weight,  0, 0.01)
+        nn.init.normal_(self.num_lin,         0, 0.01)
+        nn.init.normal_(self.user_emb.weight, 0, 0.01)
+        nn.init.normal_(self.biz_emb.weight,  0, 0.01)
+        nn.init.normal_(self.num_emb,         0, 0.01)
+        nn.init.normal_(self.avg_user_emb,    0, 0.01)
+        nn.init.normal_(self.avg_biz_emb,     0, 0.01)
+
+    def forward(self, user, biz, num, cold_user_mask=None, cold_biz_mask=None):
+        # ── Linear terms ──────────────────────────────────
+        u_lin = self.user_lin(user).squeeze(-1)
+        b_lin = self.biz_lin(biz).squeeze(-1)
+
+        if cold_user_mask is not None:
+            u_lin = torch.where(
+                cold_user_mask,
+                self.avg_user_lin.expand_as(u_lin),
+                u_lin,
+            )
+        if cold_biz_mask is not None:
+            b_lin = torch.where(
+                cold_biz_mask,
+                self.avg_biz_lin.expand_as(b_lin),
+                b_lin,
+            )
+
+        linear = (
+            self.bias
+            + u_lin
+            + b_lin
+            + (num * self.num_lin).sum(dim=1)
+        )
+
+        # ── Interaction embeddings ────────────────────────
+        u_emb = self.user_emb(user)
+        b_emb = self.biz_emb(biz)
+
+        if cold_user_mask is not None:
+            u_emb = torch.where(
+                cold_user_mask.unsqueeze(-1),
+                self.avg_user_emb.expand_as(u_emb),
+                u_emb,
+            )
+        if cold_biz_mask is not None:
+            b_emb = torch.where(
+                cold_biz_mask.unsqueeze(-1),
+                self.avg_biz_emb.expand_as(b_emb),
+                b_emb,
+            )
+
+        u = u_emb.unsqueeze(1)
+        b = b_emb.unsqueeze(1)
+        n = num.unsqueeze(-1) * self.num_emb
+
+        all_emb = torch.cat([u, b, n], dim=1)
+        all_emb = self.dropout(all_emb)
+
+        sum_sq = all_emb.sum(dim=1) ** 2
+        sq_sum = (all_emb ** 2).sum(dim=1)
+        inter  = 0.5 * (sum_sq - sq_sum).sum(dim=1)
+
+        out = linear + inter
+
+        if not self.training:
+            out = torch.clamp(out, min=0.0, max=1.0)
+
+        return out
+
+
+# =========================================================
+# EVALUATION METRICS
+# =========================================================
+def compute_metrics(predictions, targets):
+    predictions = torch.as_tensor(predictions).cpu().float()
+    targets     = torch.as_tensor(targets).cpu().float()
+    mse    = torch.mean((predictions - targets) ** 2).item()
+    rmse   = math.sqrt(mse)
+    mae    = torch.mean(torch.abs(predictions - targets)).item()
+    ss_res = torch.sum((targets - predictions) ** 2).item()
+    ss_tot = torch.sum((targets - torch.mean(targets)) ** 2).item()
+    r2     = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+    return {"MSE": mse, "RMSE": rmse, "MAE": mae, "R2": r2}
+
+
+def evaluate_model(model, loader, device):
+    """Evaluate FM model — denormalize predictions before computing metrics."""
+    model.eval()
+    all_preds, all_targets = [], []
+    with torch.no_grad():
+        for user, biz, num, rating, cold_u, cold_b in loader:
+            num_d = num.to(device, non_blocking=True)
+            cold_user_mask = cold_u.bool().to(device, non_blocking=True)
+            cold_biz_mask  = cold_b.bool().to(device, non_blocking=True)
+            pred = model(
+                user.to(device, non_blocking=True), biz.to(device, non_blocking=True), num_d,
+                cold_user_mask=cold_user_mask,
+                cold_biz_mask=cold_biz_mask,
+            )
+            all_preds.append(denormalize_target(pred.cpu()))
+            all_targets.append(denormalize_target(rating))
+    model.train()
+    return compute_metrics(torch.cat(all_preds), torch.cat(all_targets))
+
+
+def print_metrics(metrics, prefix=""):
+    print(
+        f"{prefix}MSE: {metrics['MSE']:.4f} | "
+        f"RMSE: {metrics['RMSE']:.4f} | "
+        f"MAE: {metrics['MAE']:.4f} | "
+        f"R2: {metrics['R2']:.4f}"
+    )
+
+
+# =========================================================
+# TRAIN FM — dùng tất cả NUM_DIM=32 features
+# =========================================================
+def train_fm(
+    all_data,
+    n_user=None,
+    n_business=None,
+    cold_threshold=COLD_START_THRESHOLD,
+    epochs=200,
+    batch_size=2048,
+    lr=0.01,
+    train_split=0.8,
+    val_split=0.1,
+    early_stopping_patience=30,
+    early_stopping_min_delta=1e-4,
+    eval_every=2,
+):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        torch.backends.cudnn.benchmark = True
+    print(f"\n" + "=" * 60)
+    print("STAGE 1: FM TRAINING — TẤT CẢ 32 FEATURES (không lọc)")
+    print("=" * 60)
+    print(f"Using device  : {device}")
+    print(f"Num features  : {NUM_DIM}  ← toàn bộ, không bỏ feature nào")
+
+    n = len(all_data)
+    indices = torch.randperm(n)
+
+    train_end = int(n * train_split)
+    val_end   = train_end + int(n * val_split)
+
+    tensors = [t[indices] for t in all_data.tensors]
+
+    train_data = TensorDataset(*[t[:train_end] for t in tensors])
+    val_data   = TensorDataset(*[t[train_end:val_end] for t in tensors])
+    test_data  = TensorDataset(*[t[val_end:] for t in tensors])
+
+    print(
+        f"Train: {len(train_data):,} | "
+        f"Val:   {len(val_data):,}   | "
+        f"Test:  {len(test_data):,}"
+    )
+
+    # ── Recompute cold flags from TRAIN SET ONLY (vectorized) ──
+    train_u = train_data.tensors[0].numpy()
+    train_b = train_data.tensors[1].numpy()
+
+    max_u = max(train_u.max(), val_data.tensors[0].max().item(), test_data.tensors[0].max().item())
+    max_b = max(train_b.max(), val_data.tensors[1].max().item(), test_data.tensors[1].max().item())
+
+    u_counts = np.bincount(train_u, minlength=int(max_u) + 1)
+    b_counts = np.bincount(train_b, minlength=int(max_b) + 1)
+
+    for dataset in [train_data, val_data, test_data]:
+        u_arr = dataset.tensors[0].numpy()
+        b_arr = dataset.tensors[1].numpy()
+        cu_mask = (u_counts[u_arr] <= cold_threshold).astype(np.float32)
+        cb_mask = (b_counts[b_arr] <= cold_threshold).astype(np.float32)
+        dataset.tensors[4].copy_(torch.from_numpy(cu_mask))
+        dataset.tensors[5].copy_(torch.from_numpy(cb_mask))
+
+    cold_users = int(np.sum((u_counts > 0) & (u_counts <= cold_threshold)))
+    cold_bizes = int(np.sum((b_counts > 0) & (b_counts <= cold_threshold)))
+    print(f"Cold start (train-only, ≤{cold_threshold}): "
+          f"users={cold_users:,}/{int((u_counts > 0).sum()):,} | "
+          f"biz={cold_bizes:,}/{int((b_counts > 0).sum()):,}")
+
+    class FastTensorDataLoader:
+        def __init__(self, dataset, batch_size, shuffle=False):
+            self.tensors = dataset.tensors
+            self.batch_size = batch_size
+            self.shuffle = shuffle
+            self.n = self.tensors[0].size(0)
+            self.device = self.tensors[0].device
+
+        def __iter__(self):
+            if self.shuffle:
+                self.indices = torch.randperm(self.n, device=self.device)
+            else:
+                self.indices = torch.arange(self.n, device=self.device)
+            self.i = 0
+            return self
+
+        def __next__(self):
+            if self.i >= self.n - self.batch_size + 1:
+                raise StopIteration
+            batch_idx = self.indices[self.i : self.i + self.batch_size]
+            self.i += self.batch_size
+            return tuple(t[batch_idx] for t in self.tensors)
+
+        def __len__(self):
+            return self.n // self.batch_size
+
+    try:
+        if device == "cuda":
+            train_data = TensorDataset(*[t.to(device) for t in train_data.tensors])
+            val_data   = TensorDataset(*[t.to(device) for t in val_data.tensors])
+            test_data  = TensorDataset(*[t.to(device) for t in test_data.tensors])
+            print("Toàn bộ dữ liệu (~1.1GB) đã được nạp thẳng lên GPU VRAM! Sử dụng Fast GPU Dataloader.")
+            train_loader = FastTensorDataLoader(train_data, batch_size=batch_size, shuffle=True)
+            val_loader = FastTensorDataLoader(val_data, batch_size=batch_size * 2, shuffle=False)
+            test_loader = FastTensorDataLoader(test_data, batch_size=batch_size * 2, shuffle=False)
+        else:
+            raise RuntimeError("CPU mode")
+    except RuntimeError:
+        num_workers = min(4, os.cpu_count() or 1)
+        print("VRAM không đủ hoặc dùng CPU, nạp qua DataLoader thông thường.")
+        train_loader = DataLoader(
+            train_data, batch_size=batch_size, shuffle=True,
+            pin_memory=True, num_workers=num_workers,
+            persistent_workers=True, prefetch_factor=4, drop_last=True,
+        )
+        val_loader = DataLoader(
+            val_data, batch_size=batch_size * 2, shuffle=False,
+            pin_memory=True, num_workers=num_workers,
+            persistent_workers=True, prefetch_factor=4,
+        )
+        test_loader = DataLoader(
+            test_data, batch_size=batch_size * 2, shuffle=False,
+            pin_memory=True, num_workers=num_workers,
+            persistent_workers=True, prefetch_factor=4,
+        )
+
+
+    if n_user is None:
+        n_user = int(all_data.tensors[0].max().item()) + 1
+    if n_business is None:
+        n_business = int(all_data.tensors[1].max().item()) + 1
+    print(f"Unique users: {n_user:,} | Unique businesses: {n_business:,}")
+
+    model = FMModel(
+        n_user=n_user,
+        n_business=n_business,
+        num_dim=NUM_DIM,
+        k=64,
+        dropout=0.15,
+    ).to(device)
+
+    # Compile the model if using PyTorch 2.0+ for faster training
+    if hasattr(torch, "compile"):
+        print("Compiling model with torch.compile(mode='reduce-overhead') for small batch sizes...")
+        try:
+            model = torch.compile(model, mode="reduce-overhead")
+        except Exception as e:
+            print(f"torch.compile failed ({e}), using standard model.")
+
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Trainable parameters: {trainable:,}")
+
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=lr,
+        momentum=0.9,
+        weight_decay=1e-5,
+        nesterov=True,
+    )
+    loss_fn   = nn.MSELoss()
+    scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer, T_0=20, T_mult=2, eta_min=1e-5
+    )
+    history = {
+        "train_loss": [], "val_mse": [], "val_rmse": [],
+        "val_mae":    [], "val_r2":  [],
+    }
+    best_val_rmse     = float("inf")
+    best_model_state  = None
+    best_epoch        = 0
+    epochs_no_improve = 0
+
+    scaler = torch.amp.GradScaler('cuda', enabled=(device == "cuda"))
+
+    print(f"\nBắt đầu training (SGD Nesterov, target=[0,1])...\n")
+
+    for ep in range(epochs):
+        model.train()
+        total_loss, total_count = 0.0, 0
+
+        for user, biz, num, rating, cold_u, cold_b in train_loader:
+            user   = user.to(device, non_blocking=True)
+            biz    = biz.to(device, non_blocking=True)
+            num    = num.to(device, non_blocking=True)
+            rating = rating.to(device, non_blocking=True)
+            cold_user_mask = cold_u.bool().to(device, non_blocking=True)
+            cold_biz_mask  = cold_b.bool().to(device, non_blocking=True)
+
+            with torch.amp.autocast('cuda', enabled=(device == "cuda")):
+                pred = model(
+                    user, biz, num,
+                    cold_user_mask=cold_user_mask,
+                    cold_biz_mask=cold_biz_mask,
+                )
+                loss = loss_fn(pred, rating)
+
+            optimizer.zero_grad()
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            scaler.step(optimizer)
+            scaler.update()
+
+            total_loss  += loss.item() * len(user)
+            total_count += len(user)
+
+        avg_loss = total_loss / total_count if total_count > 0 else float("nan")
+        history["train_loss"].append(avg_loss)
+
+        # ── Linear warmup → Cosine schedule (mỗi epoch) ──
+        if ep < WARMUP_EPOCHS:
+            warmup_lr = lr * (ep + 1) / WARMUP_EPOCHS
+            for pg in optimizer.param_groups:
+                pg["lr"] = warmup_lr
+        else:
+            scheduler.step(ep + 1)
+
+        if (ep + 1) % eval_every == 0:
+            val_metrics = evaluate_model(model, val_loader, device)
+            current_lr = optimizer.param_groups[0]["lr"]
+
+            history["val_mse"].append(val_metrics["MSE"])
+            history["val_rmse"].append(val_metrics["RMSE"])
+            history["val_mae"].append(val_metrics["MAE"])
+            history["val_r2"].append(val_metrics["R2"])
+
+            print(
+                f"Epoch {ep+1:03d}/{epochs} | "
+                f"Train Loss (norm): {avg_loss:.6f} | "
+                f"LR: {current_lr:.6f}"
+            )
+            print_metrics(val_metrics, prefix="  Val → ")
+
+            if val_metrics["RMSE"] < (best_val_rmse - early_stopping_min_delta):
+                best_val_rmse     = val_metrics["RMSE"]
+                best_model_state  = copy.deepcopy(model.state_dict())
+                best_epoch        = ep + 1
+                epochs_no_improve = 0
+                print(f"  ★ New best RMSE: {best_val_rmse:.4f}")
+            else:
+                epochs_no_improve += 1
+                print(
+                    f"  No improvement "
+                    f"{epochs_no_improve}/{early_stopping_patience}"
+                )
+                if epochs_no_improve >= early_stopping_patience:
+                    print(f"\nEarly stopping tại epoch {ep + 1}")
+                    history["stopped_epoch"] = ep + 1
+                    break
+
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        print(
+            f"\nLoaded best model "
+            f"(epoch {best_epoch}, Val RMSE: {best_val_rmse:.4f})"
+        )
+
+    print("\n" + "=" * 60)
+    print("FM FINAL EVALUATION (scale gốc [1,5])")
+    print("=" * 60)
+    for split_name, loader in [
+        ("Train", train_loader),
+        ("Val",   val_loader),
+        ("Test",  test_loader),
+    ]:
+        m = evaluate_model(model, loader, device)
+        print(f"\n{split_name} Set:")
+        print_metrics(m, prefix="  ")
+
+    history["best_epoch"]    = best_epoch
+    history["best_val_rmse"] = best_val_rmse
+
+    return model, history, test_data, test_loader, train_data, val_data
+
+
+
+
+
+# =========================================================
+# SAVE OUTPUTS (Kaggle: /kaggle/working/)
+# =========================================================
+def save_outputs(results, out_dir="/kaggle/working"):
+    """
+    Lưu toàn bộ model artifacts ra /kaggle/working/.
+
+    Files được tạo ra:
+      fm_model.pt          — FM model weights (torch)
+      id_maps.pkl          — IDMapper cho user và business (cần cho inference)
+      fm_history.json      — Training history (loss, RMSE mỗi epoch)
+      model_info.json      — Metadata: features, hyperparams, best RMSE
+    """
+    os.makedirs(out_dir, exist_ok=True)
+
+    # ── 1. FM model weights ─────────────────────────────────
+    fm_path = os.path.join(out_dir, "fm_model.pt")
+    torch.save(results["fm_model"].state_dict(), fm_path)
+    print(f"  ✓ FM model       → {fm_path}")
+
+    # ── 2. ID maps (cần cho inference trên dữ liệu mới) ────
+    id_map_path = os.path.join(out_dir, "id_maps.pkl")
+    with open(id_map_path, "wb") as f:
+        pickle.dump({
+            "user_map": results["user_map"].map,
+            "biz_map":  results["biz_map"].map,
+        }, f)
+    print(f"  ✓ ID maps        → {id_map_path}")
+
+    # ── 3. Training history ──────────────────────────────────
+    history_path = os.path.join(out_dir, "fm_history.json")
+    history_serializable = {
+        k: [float(x) for x in v] if isinstance(v, list) else v
+        for k, v in results["fm_history"].items()
+    }
+    with open(history_path, "w") as f:
+        json.dump(history_serializable, f, indent=2)
+    print(f"  ✓ FM history     → {history_path}")
+
+    # ── 4. Model metadata ────────────────────────────────────
+    info_path = os.path.join(out_dir, "model_info.json")
+    info = {
+        "num_features_used":     NUM_DIM,
+        "n_users":               len(results["user_map"].map),
+        "n_businesses":          len(results["biz_map"].map),
+        "all_features":          FEAT_NAMES,
+        "best_val_rmse":         results["fm_history"].get("best_val_rmse"),
+        "best_epoch":            results["fm_history"].get("best_epoch"),
+        "stopped_epoch":         results["fm_history"].get("stopped_epoch", None),
+        "target_min":            TARGET_MIN,
+        "target_max":            TARGET_MAX,
+        "cold_threshold":        COLD_START_THRESHOLD,
+        "embedding_dim":         128,
+    }
+    with open(info_path, "w") as f:
+        json.dump(info, f, indent=2)
+    print(f"  ✓ Model info     → {info_path}")
+
+    # ── 5. Datasets (Train, Val, Test) ───────────────────────
+    train_path = os.path.join(out_dir, "train_data.pt")
+    val_path   = os.path.join(out_dir, "val_data.pt")
+    test_path  = os.path.join(out_dir, "test_data.pt")
+    
+    torch.save(results["train_data"].tensors, train_path)
+    torch.save(results["val_data"].tensors, val_path)
+    torch.save(results["test_data"].tensors, test_path)
+    
+    print(f"  ✓ Datasets       → train_data.pt, val_data.pt, test_data.pt")
+    print(f"\n  Tất cả outputs đã lưu vào: {out_dir}/")
+
+
+# =========================================================
+# FULL PIPELINE
+# =========================================================
+def run_full_pipeline(
+    review_path,
+    user_ctx,
+    biz_ctx,
+    user_tip,
+    biz_tip,
+    checkin_ctx,
+    max_reviews=None,
+    cold_threshold=COLD_START_THRESHOLD,
+    **fm_kwargs,
+):
+    # ── Load toàn bộ data vào RAM ───────────────────────────
+    print("\n" + "=" * 60)
+    print("LOADING ALL DATA INTO MEMORY (normalized + cold flags)...")
+    print("=" * 60)
+    all_data, user_map, biz_map, user_counts, biz_counts = load_all_data(
+        review_path=review_path,
+        user_ctx=user_ctx,
+        biz_ctx=biz_ctx,
+        user_tip=user_tip,
+        biz_tip=biz_tip,
+        checkin_ctx=checkin_ctx,
+        max_reviews=max_reviews,
+        cold_threshold=cold_threshold,
+    )
+    cold_users = sum(1 for c in user_counts.values() if c <= cold_threshold)
+    cold_bizes = sum(1 for c in biz_counts.values() if c <= cold_threshold)
+    print(f"Total users: {len(user_counts):,} | Cold start (≤{cold_threshold}): {cold_users:,} "
+          f"({cold_users/max(len(user_counts),1)*100:.1f}%)")
+    print(f"Total biz:   {len(biz_counts):,} | Cold start (≤{cold_threshold}): {cold_bizes:,} "
+          f"({cold_bizes/max(len(biz_counts),1)*100:.1f}%)")
+    print(f"Total samples: {len(all_data):,}")
+    print(f"Numerical feature dim: {NUM_DIM}")
+
+    # ── Tính n_user/n_business chính xác từ IDMapper ───────
+    n_user     = len(user_map.map)
+    n_business = len(biz_map.map)
+
+    # ── FM Training (tất cả 32 features) ───────────────────
+    fm_model, fm_history, test_data, test_loader, train_data, val_data = train_fm(
+        all_data,
+        n_user=n_user,
+        n_business=n_business,
+        cold_threshold=cold_threshold,
+        **fm_kwargs,
+    )
+
+    return {
+        "fm_model":     fm_model,
+        "fm_history":   fm_history,
+        "user_map":     user_map,
+        "biz_map":      biz_map,
+        "train_data":   train_data,
+        "val_data":     val_data,
+        "test_data":    test_data,
+    }
+
+
+# =========================================================
+# MAIN
+# =========================================================
+if __name__ == "__main__":
+    BASE = "/kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset"
+
+    print("Loading contexts...")
+    user_ctx          = load_user_context(f"{BASE}/yelp_academic_dataset_user.json")
+    biz_ctx           = load_business_context(f"{BASE}/yelp_academic_dataset_business.json")
+    user_tip, biz_tip = load_tip_context(f"{BASE}/yelp_academic_dataset_tip.json")
+    checkin_ctx       = load_checkin_context(f"{BASE}/yelp_academic_dataset_checkin.json")
+
+    results = run_full_pipeline(
+        review_path=f"{BASE}/yelp_academic_dataset_review.json",
+        user_ctx=user_ctx,
+        biz_ctx=biz_ctx,
+        user_tip=user_tip,
+        biz_tip=biz_tip,
+        checkin_ctx=checkin_ctx,
+        max_reviews=None,
+        cold_threshold=5,
+        epochs=200,
+        batch_size=2048,
+        train_split=0.8,
+        val_split=0.1,
+        early_stopping_patience=30,
+        early_stopping_min_delta=1e-4,
+        eval_every=1,
+    )
+
+    print("\n" + "=" * 60)
+    print("PIPELINE COMPLETE")
+    print("=" * 60)
+    print(f"Best FM Val RMSE  : {results['fm_history']['best_val_rmse']:.4f}")
+    print(f"Best FM Epoch     : {results['fm_history']['best_epoch']}")
+
+    # ── Lưu tất cả outputs ra /kaggle/working/ ─────────────
+    print("\n" + "=" * 60)
+    print("SAVING OUTPUTS → /kaggle/working/")
+    print("=" * 60)
+    save_outputs(results, out_dir="/kaggle/working")
