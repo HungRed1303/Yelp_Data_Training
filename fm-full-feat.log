@@ -1,0 +1,228 @@
+7.2s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+7.2s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+7.2s 3 0.00s - to python to disable frozen modules.
+7.2s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+7.8s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+7.8s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+7.8s 7 0.00s - to python to disable frozen modules.
+7.8s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+13.6s 9 ============================================================
+13.6s 10 FM FULL CONTEXT — 58 FEATURES
+13.6s 11 ============================================================
+13.6s 12 
+13.6s 13 Loading contexts...
+16.6s 14 ✓ City map: top 50 cities
+18.0s 15 ✓ State map: top 30 states
+115.1s 16 ✓ Users: 1,987,897
+119.2s 17 ✓ Businesses: 150,346
+124.8s 18 ✓ Tips: 301,758 users, 106,193 businesses
+217.1s 19 ✓ Checkin: 131,930 businesses
+217.1s 20 Context load time: 203.5s
+217.1s 21 
+217.1s 22 Loading review data...
+217.9s 23 [Single Pass] Reading reviews...
+283.8s 24 6,990,280 reviews | 1,987,929 users | 150,346 businesses
+299.6s 25 Caching to /kaggle/working/dataset_cache_full58.npz...
+394.3s 26 Data load time: 177.0s | 6,990,280 samples | 58 features
+394.3s 27 
+394.3s 28 ============================================================
+394.3s 29 [FM_Full_58feat] 58 FEATURES
+394.3s 30 ============================================================
+394.3s 31 Device: cuda
+396.0s 32 Train:5,592,224 | Val:699,028 | Test:699,028
+396.8s 33 Data loaded to GPU VRAM.
+407.8s 34 Params: 138,991,776
+407.8s 35 
+407.8s 36 Training [FM_Full_58feat]...
+407.8s 37 
+554.5s 38 Epoch 001/200 | Loss:0.953374 | LR:0.002000
+554.5s 39 Val → MSE:2.0920 | RMSE:1.4464 | MAE:1.1206 | R2:0.0419
+554.5s 40 ★ Best RMSE: 1.4464
+687.1s 41 Epoch 002/200 | Loss:0.133045 | LR:0.004000
+687.1s 42 Val → MSE:1.6143 | RMSE:1.2706 | MAE:1.0833 | R2:0.2607
+687.1s 43 ★ Best RMSE: 1.2706
+819.7s 44 Epoch 003/200 | Loss:0.156604 | LR:0.006000
+819.7s 45 Val → MSE:1.7976 | RMSE:1.3407 | MAE:1.1317 | R2:0.1768
+819.7s 46 No improve 1/30
+952.3s 47 Epoch 004/200 | Loss:0.224629 | LR:0.008000
+952.3s 48 Val → MSE:1.9752 | RMSE:1.4054 | MAE:1.1659 | R2:0.0954
+952.3s 49 No improve 2/30
+1085.0s 50 Epoch 005/200 | Loss:0.340659 | LR:0.010000
+1085.0s 51 Val → MSE:1.9773 | RMSE:1.4062 | MAE:1.1567 | R2:0.0945
+1085.0s 52 No improve 3/30
+1217.7s 53 Epoch 006/200 | Loss:0.529058 | LR:0.007941
+1217.7s 54 Val → MSE:2.0011 | RMSE:1.4146 | MAE:1.1488 | R2:0.0836
+1217.7s 55 No improve 4/30
+1350.4s 56 Epoch 007/200 | Loss:0.327270 | LR:0.007273
+1350.4s 57 Val → MSE:1.6426 | RMSE:1.2816 | MAE:1.0348 | R2:0.2477
+1350.4s 58 No improve 5/30
+1483.2s 59 Epoch 008/200 | Loss:0.296034 | LR:0.006549
+1483.2s 60 Val → MSE:1.7616 | RMSE:1.3273 | MAE:1.0642 | R2:0.1932
+1483.2s 61 No improve 6/30
+1615.9s 62 Epoch 009/200 | Loss:0.236409 | LR:0.005786
+1615.9s 63 Val → MSE:1.8258 | RMSE:1.3512 | MAE:1.0786 | R2:0.1639
+1615.9s 64 No improve 7/30
+1748.5s 65 Epoch 010/200 | Loss:0.200192 | LR:0.005005
+1748.5s 66 Val → MSE:1.7336 | RMSE:1.3167 | MAE:1.0474 | R2:0.2061
+1748.5s 67 No improve 8/30
+1881.0s 68 Epoch 011/200 | Loss:0.169374 | LR:0.004224
+1881.0s 69 Val → MSE:1.7150 | RMSE:1.3096 | MAE:1.0348 | R2:0.2146
+1881.0s 70 No improve 9/30
+2013.5s 71 Epoch 012/200 | Loss:0.142900 | LR:0.003461
+2013.5s 72 Val → MSE:1.4426 | RMSE:1.2011 | MAE:0.9524 | R2:0.3393
+2013.5s 73 ★ Best RMSE: 1.2011
+2145.9s 74 Epoch 013/200 | Loss:0.119555 | LR:0.002737
+2145.9s 75 Val → MSE:1.4605 | RMSE:1.2085 | MAE:0.9541 | R2:0.3312
+2145.9s 76 No improve 1/30
+2278.2s 77 Epoch 014/200 | Loss:0.102588 | LR:0.002069
+2278.2s 78 Val → MSE:1.4170 | RMSE:1.1904 | MAE:0.9384 | R2:0.3511
+2278.2s 79 ★ Best RMSE: 1.1904
+2410.5s 80 Epoch 015/200 | Loss:0.090275 | LR:0.001473
+2410.5s 81 Val → MSE:1.2809 | RMSE:1.1318 | MAE:0.8859 | R2:0.4134
+2410.5s 82 ★ Best RMSE: 1.1318
+2542.8s 83 Epoch 016/200 | Loss:0.081880 | LR:0.000964
+2542.8s 84 Val → MSE:1.2454 | RMSE:1.1160 | MAE:0.8720 | R2:0.4296
+2542.8s 85 ★ Best RMSE: 1.1160
+2675.4s 86 Epoch 017/200 | Loss:0.077035 | LR:0.000554
+2675.4s 87 Val → MSE:1.2069 | RMSE:1.0986 | MAE:0.8545 | R2:0.4473
+2675.4s 88 ★ Best RMSE: 1.0986
+2808.0s 89 Epoch 018/200 | Loss:0.074496 | LR:0.000254
+2808.0s 90 Val → MSE:1.1752 | RMSE:1.0841 | MAE:0.8390 | R2:0.4618
+2808.0s 91 ★ Best RMSE: 1.0841
+2940.5s 92 Epoch 019/200 | Loss:0.073499 | LR:0.000071
+2940.5s 93 Val → MSE:1.1700 | RMSE:1.0817 | MAE:0.8359 | R2:0.4642
+2940.5s 94 ★ Best RMSE: 1.0817
+3072.9s 95 Epoch 020/200 | Loss:0.073033 | LR:0.010000
+3072.9s 96 Val → MSE:1.1549 | RMSE:1.0747 | MAE:0.8248 | R2:0.4711
+3072.9s 97 ★ Best RMSE: 1.0747
+3205.4s 98 Epoch 021/200 | Loss:0.914373 | LR:0.009985
+3205.4s 99 Val → MSE:1.2466 | RMSE:1.1165 | MAE:0.8295 | R2:0.4291
+3205.4s 100 No improve 1/30
+3337.9s 101 Epoch 022/200 | Loss:0.911364 | LR:0.009939
+3337.9s 102 Val → MSE:1.8432 | RMSE:1.3577 | MAE:1.0541 | R2:0.1559
+3337.9s 103 No improve 2/30
+3470.3s 104 Epoch 023/200 | Loss:0.894515 | LR:0.009862
+3470.3s 105 Val → MSE:1.3190 | RMSE:1.1485 | MAE:0.8314 | R2:0.3959
+3470.3s 106 No improve 3/30
+3602.8s 107 Epoch 024/200 | Loss:0.874897 | LR:0.009756
+3602.8s 108 Val → MSE:1.7218 | RMSE:1.3122 | MAE:1.0153 | R2:0.2115
+3602.8s 109 No improve 4/30
+3735.3s 110 Epoch 025/200 | Loss:0.858677 | LR:0.009620
+3735.3s 111 Val → MSE:1.3319 | RMSE:1.1541 | MAE:0.8365 | R2:0.3900
+3735.3s 112 No improve 5/30
+3867.8s 113 Epoch 026/200 | Loss:0.843059 | LR:0.009456
+3867.8s 114 Val → MSE:1.6212 | RMSE:1.2732 | MAE:0.9863 | R2:0.2576
+3867.8s 115 No improve 6/30
+4000.5s 116 Epoch 027/200 | Loss:0.812551 | LR:0.009264
+4000.5s 117 Val → MSE:1.3668 | RMSE:1.1691 | MAE:0.8386 | R2:0.3741
+4000.5s 118 No improve 7/30
+4134.2s 119 Epoch 028/200 | Loss:0.782731 | LR:0.009046
+4134.2s 120 Val → MSE:1.6062 | RMSE:1.2674 | MAE:0.9839 | R2:0.2644
+4134.2s 121 No improve 8/30
+4266.7s 122 Epoch 029/200 | Loss:0.749147 | LR:0.008803
+4266.7s 123 Val → MSE:1.3728 | RMSE:1.1717 | MAE:0.8396 | R2:0.3713
+4266.7s 124 No improve 9/30
+4399.2s 125 Epoch 030/200 | Loss:0.721293 | LR:0.008537
+4399.2s 126 Val → MSE:1.6214 | RMSE:1.2733 | MAE:0.9829 | R2:0.2575
+4399.2s 127 No improve 10/30
+4531.7s 128 Epoch 031/200 | Loss:0.676495 | LR:0.008249
+4531.7s 129 Val → MSE:1.3094 | RMSE:1.1443 | MAE:0.8248 | R2:0.4004
+4531.7s 130 No improve 11/30
+4664.3s 131 Epoch 032/200 | Loss:0.632967 | LR:0.007941
+4664.3s 132 Val → MSE:1.5172 | RMSE:1.2318 | MAE:0.9530 | R2:0.3052
+4664.3s 133 No improve 12/30
+4796.8s 134 Epoch 033/200 | Loss:0.594346 | LR:0.007615
+4796.8s 135 Val → MSE:1.2996 | RMSE:1.1400 | MAE:0.8250 | R2:0.4049
+4796.8s 136 No improve 13/30
+4929.5s 137 Epoch 034/200 | Loss:0.551659 | LR:0.007273
+4929.5s 138 Val → MSE:1.4803 | RMSE:1.2167 | MAE:0.9396 | R2:0.3221
+4929.5s 139 No improve 14/30
+5062.0s 140 Epoch 035/200 | Loss:0.508306 | LR:0.006917
+5062.0s 141 Val → MSE:1.2873 | RMSE:1.1346 | MAE:0.8245 | R2:0.4105
+5062.0s 142 No improve 15/30
+5194.6s 143 Epoch 036/200 | Loss:0.476229 | LR:0.006549
+5194.6s 144 Val → MSE:1.2733 | RMSE:1.1284 | MAE:0.8711 | R2:0.4169
+5194.6s 145 No improve 16/30
+5327.1s 146 Epoch 037/200 | Loss:0.430817 | LR:0.006171
+5327.1s 147 Val → MSE:1.2677 | RMSE:1.1259 | MAE:0.8200 | R2:0.4194
+5327.1s 148 No improve 17/30
+5459.4s 149 Epoch 038/200 | Loss:0.388140 | LR:0.005786
+5459.4s 150 Val → MSE:1.3606 | RMSE:1.1665 | MAE:0.9029 | R2:0.3769
+5459.4s 151 No improve 18/30
+5591.7s 152 Epoch 039/200 | Loss:0.346800 | LR:0.005397
+5591.7s 153 Val → MSE:1.2716 | RMSE:1.1277 | MAE:0.8193 | R2:0.4177
+5591.7s 154 No improve 19/30
+5724.0s 155 Epoch 040/200 | Loss:0.314975 | LR:0.005005
+5724.0s 156 Val → MSE:1.3135 | RMSE:1.1461 | MAE:0.8847 | R2:0.3985
+5724.0s 157 No improve 20/30
+5856.3s 158 Epoch 041/200 | Loss:0.276236 | LR:0.004613
+5856.3s 159 Val → MSE:1.2459 | RMSE:1.1162 | MAE:0.8143 | R2:0.4294
+5856.3s 160 No improve 21/30
+5988.6s 161 Epoch 042/200 | Loss:0.249713 | LR:0.004224
+5988.6s 162 Val → MSE:1.2847 | RMSE:1.1334 | MAE:0.8739 | R2:0.4117
+5988.6s 163 No improve 22/30
+6121.0s 164 Epoch 043/200 | Loss:0.218227 | LR:0.003839
+6121.0s 165 Val → MSE:1.2147 | RMSE:1.1021 | MAE:0.8108 | R2:0.4437
+6121.0s 166 No improve 23/30
+6253.6s 167 Epoch 044/200 | Loss:0.193009 | LR:0.003461
+6253.6s 168 Val → MSE:1.2756 | RMSE:1.1294 | MAE:0.8732 | R2:0.4158
+6253.6s 169 No improve 24/30
+6386.2s 170 Epoch 045/200 | Loss:0.170275 | LR:0.003093
+6386.2s 171 Val → MSE:1.1958 | RMSE:1.0935 | MAE:0.8072 | R2:0.4524
+6386.2s 172 No improve 25/30
+6519.0s 173 Epoch 046/200 | Loss:0.150802 | LR:0.002737
+6519.0s 174 Val → MSE:1.2515 | RMSE:1.1187 | MAE:0.8624 | R2:0.4269
+6519.0s 175 No improve 26/30
+6651.5s 176 Epoch 047/200 | Loss:0.133511 | LR:0.002395
+6651.5s 177 Val → MSE:1.1687 | RMSE:1.0810 | MAE:0.8040 | R2:0.4648
+6651.5s 178 No improve 27/30
+6784.0s 179 Epoch 048/200 | Loss:0.119178 | LR:0.002069
+6784.0s 180 Val → MSE:1.2002 | RMSE:1.0955 | MAE:0.8415 | R2:0.4504
+6784.0s 181 No improve 28/30
+6916.5s 182 Epoch 049/200 | Loss:0.106990 | LR:0.001761
+6916.5s 183 Val → MSE:1.1600 | RMSE:1.0770 | MAE:0.8032 | R2:0.4688
+6916.5s 184 No improve 29/30
+7049.0s 185 Epoch 050/200 | Loss:0.097044 | LR:0.001473
+7049.0s 186 Val → MSE:1.1812 | RMSE:1.0868 | MAE:0.8345 | R2:0.4590
+7049.0s 187 No improve 30/30
+7049.0s 188 
+7049.0s 189 Early stopping at epoch 50
+7049.0s 190 
+7049.0s 191 Loaded best model (epoch 20, Val RMSE:1.0747)
+7049.0s 192 
+7049.0s 193 ============================================================
+7049.0s 194 FINAL EVALUATION [FM_Full_58feat]
+7049.0s 195 ============================================================
+7051.7s 196 
+7051.7s 197 Train:
+7051.7s 198 MSE:1.1574 | RMSE:1.0758 | MAE:0.8255 | R2:0.4708
+7051.9s 199 
+7051.9s 200 Val:
+7051.9s 201 MSE:1.1549 | RMSE:1.0747 | MAE:0.8248 | R2:0.4711
+7052.5s 202 
+7052.5s 203 Test:
+7052.5s 204 MSE:1.1550 | RMSE:1.0747 | MAE:0.8250 | R2:0.4716
+7052.5s 205 
+7052.5s 206 ⏱  Train time: 110.9 min (6655s)
+7052.5s 207 
+7052.5s 208 ============================================================
+7052.5s 209 PIPELINE COMPLETE
+7052.5s 210 ============================================================
+7052.5s 211 Num features  : 58
+7052.5s 212 Best Val RMSE : 1.0747
+7052.5s 213 Best Epoch    : 20
+7052.5s 214 Train time    : 110.9 min
+7052.5s 215 Total time    : 117.3 min
+7052.5s 216 
+7052.5s 217 ============================================================
+7052.5s 218 SAVING OUTPUTS
+7052.5s 219 ============================================================
+7056.7s 220 ✓ Saved with prefix 'full58' → /kaggle/working/
+7062.3s 221 /usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+7062.3s 222 cells[i][c] = re.sub('\\\\\|', '|', cell)
+7062.4s 223 /usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+7062.4s 224 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+7063.1s 225 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+7063.4s 226 [NbConvertApp] Writing 53139 bytes to __notebook__.ipynb
+7065.8s 227 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+7066.9s 228 [NbConvertApp] Writing 481023 bytes to __results__.html
