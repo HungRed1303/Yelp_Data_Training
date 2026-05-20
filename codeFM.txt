@@ -1,0 +1,880 @@
+import json, orjson, math, copy, os, pickle, time
+import numpy as np
+from collections import Counter
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from datetime import datetime
+import builtins
+
+_print = builtins.print
+def print(*args, **kwargs):
+    kwargs.setdefault("flush", True)
+    return _print(*args, **kwargs)
+builtins.print = print
+
+
+# =========================================================
+# CONSTANTS
+# =========================================================
+USER_CTX_DIM  = 9
+BIZ_CTX_DIM   = 72
+TIP_DIM       = 3
+CHECKIN_DIM   = 4
+REVIEW_DIM    = 4
+TEMPORAL_DIM  = 5
+
+NUM_DIM = USER_CTX_DIM + BIZ_CTX_DIM + TIP_DIM*2 + CHECKIN_DIM + REVIEW_DIM + TEMPORAL_DIM
+# = 9+72+6+4+4+5 = 100
+
+FEAT_NAMES = [
+    # USER (9)
+    "u_review_count","u_fans","u_useful","u_funny","u_cool",
+    "u_years_active","u_elite","u_friend_count","u_compliments",
+    # BUSINESS (72)
+    "b_review_count","b_is_open","b_lat","b_lon","b_cat_count",
+    "b_open_days","b_total_hours","b_price_range","b_city",
+    "b_wifi","b_parking","b_delivery","b_takeout","b_reservations",
+    "b_outdoor","b_groups","b_kids","b_credit_card",
+    "b_state","b_has_tv","b_noise_level","b_alcohol",
+    "b_ambience_casual","b_ambience_romantic","b_good_for_dinner",
+    "b_happy_hour","b_caters","b_drive_thru",
+    # — new flat attrs (13)
+    "b_bike_parking","b_by_appointment","b_attire","b_wheelchair",
+    "b_table_service","b_dogs_allowed","b_bitcoin",
+    "b_coat_check","b_good_for_dancing","b_accepts_insurance",
+    "b_byob","b_corkage","b_smoking",
+    # — ambience sub-keys (7 new)
+    "b_ambience_classy","b_ambience_divey","b_ambience_hipster",
+    "b_ambience_intimate","b_ambience_touristy","b_ambience_trendy",
+    "b_ambience_upscale",
+    # — good-for-meal sub-keys (5 new)
+    "b_good_for_breakfast","b_good_for_brunch","b_good_for_dessert",
+    "b_good_for_lunch","b_good_for_latenight",
+    # — parking sub-keys (5 new)
+    "b_parking_garage","b_parking_lot","b_parking_street",
+    "b_parking_valet","b_parking_validated",
+    # — best-nights sub-keys (7 new)
+    "b_best_mon","b_best_tue","b_best_wed","b_best_thu",
+    "b_best_fri","b_best_sat","b_best_sun",
+    # — music sub-keys (7 new)
+    "b_music_bg","b_music_dj","b_music_jukebox","b_music_karaoke",
+    "b_music_live","b_music_no_music","b_music_video",
+    # TIP USER (3)
+    "ut_count","ut_avg_len","ut_avg_comp",
+    # TIP BUSINESS (3)
+    "bt_count","bt_avg_len","bt_avg_comp",
+    # CHECKIN (4)
+    "ck_count","ck_density","ck_weekend_ratio","ck_peak_hour",
+    # REVIEW (4)
+    "r_useful","r_funny","r_cool","r_text_len",
+    # TEMPORAL (5)
+    "t_year","t_month","t_day","t_weekday","t_hour",
+]
+assert len(FEAT_NAMES) == NUM_DIM, f"{len(FEAT_NAMES)} != {NUM_DIM}"
+
+TARGET_MIN, TARGET_MAX = 1.0, 5.0
+TARGET_RANGE = TARGET_MAX - TARGET_MIN
+COLD_START_THRESHOLD = 5
+WARMUP_EPOCHS = 3
+
+def normalize_target(r):   return (r - TARGET_MIN) / TARGET_RANGE
+def denormalize_target(p): return p * TARGET_RANGE + TARGET_MIN
+
+
+# =========================================================
+# ID MAPPER
+# =========================================================
+class IDMapper:
+    def __init__(self): self.map = {}
+    def get(self, key):
+        if key not in self.map: self.map[key] = len(self.map)
+        return self.map[key]
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+def _bool_attr(attrs, key):
+    if not attrs: return 0.0
+    v = attrs.get(key)
+    if v is None: return 0.0
+    if isinstance(v, bool): return float(v)
+    if isinstance(v, str):
+        return 1.0 if v.strip("'\" ").lower() in ("true","yes","free","paid","1") else 0.0
+    return 0.0
+
+def _parse_total_hours(hours):
+    if not hours: return 0, 0.0
+    open_days, total = len(hours), 0.0
+    for _, hrs in hours.items():
+        if not hrs or hrs == "0:0-0:0": continue
+        try:
+            o, c = hrs.split("-")
+            oh, om = map(int, o.split(":"))
+            ch, cm = map(int, c.split(":"))
+            total += max(0, (ch*60+cm)-(oh*60+om)) / 60.0
+        except: total += 8.0
+    return open_days, total
+
+def _parse_nested_bool(attrs, outer_key, inner_key):
+    if not attrs: return 0.0
+    raw = attrs.get(outer_key)
+    if raw is None: return 0.0
+    if isinstance(raw, dict):
+        return 1.0 if str(raw.get(inner_key,"")).lower() in ("true","1","yes") else 0.0
+    if isinstance(raw, str):
+        return 1.0 if f"'{inner_key}': True" in raw else 0.0
+    return 0.0
+
+
+# =========================================================
+# BUILD MAPS
+# =========================================================
+def build_city_map(path, top_n=50):
+    counter = Counter()
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            b = json.loads(line)
+            counter[(b.get("city") or "Unknown").strip()] += 1
+    city_map = {c:(i+1) for i,(c,_) in enumerate(counter.most_common(top_n))}
+    print(f"  ✓ City map: top {top_n} cities"); return city_map
+
+def build_state_map(path, top_n=30):
+    counter = Counter()
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            b = json.loads(line)
+            counter[(b.get("state") or "Unknown").strip()] += 1
+    state_map = {s:(i+1) for i,(s,_) in enumerate(counter.most_common(top_n))}
+    print(f"  ✓ State map: top {top_n} states"); return state_map
+
+
+# =========================================================
+# LOAD USER CONTEXT — 9 features
+# =========================================================
+def load_user_context(path):
+    ctx = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            u = json.loads(line)
+            try:
+                dt = datetime.strptime(u.get("yelping_since","2015-01-01 00:00:00"),"%Y-%m-%d %H:%M:%S")
+                years_active = max(0.0,(2024-dt.year)/10.0)
+            except: years_active = 0.5
+
+            elite_str = u.get("elite","")
+            elite_count = len(elite_str) if isinstance(elite_str,list) else (len(elite_str.split(",")) if elite_str else 0)
+            friends = u.get("friends","")
+            friend_count = len([x for x in friends.split(",") if x.strip()]) if isinstance(friends,str) and friends and friends!="None" else 0
+            compliment_keys = ["compliment_hot","compliment_more","compliment_profile","compliment_cute",
+                               "compliment_list","compliment_note","compliment_plain","compliment_cool",
+                               "compliment_funny","compliment_writer","compliment_photos"]
+            total_comp = sum(u.get(k,0) or 0 for k in compliment_keys)
+
+            ctx[u["user_id"]] = [
+                math.log1p(u.get("review_count",0))/10.0,
+                math.log1p(u.get("fans",0))/10.0,
+                math.log1p(max(0,u.get("useful",0) or 0))/10.0,
+                math.log1p(max(0,u.get("funny",0) or 0))/10.0,
+                math.log1p(max(0,u.get("cool",0) or 0))/10.0,
+                years_active,
+                math.log1p(elite_count)/10.0,
+                math.log1p(friend_count)/10.0,
+                math.log1p(total_comp)/10.0,
+            ]
+    print(f"  ✓ Users: {len(ctx):,}"); return ctx
+
+
+# =========================================================
+# LOAD BUSINESS CONTEXT — 72 features
+# =========================================================
+def load_business_context(path, city_map, state_map):
+    ctx = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            b = json.loads(line)
+            categories = b.get("categories","") or ""
+            cat_count  = len(categories.split(",")) if categories else 0
+            hours      = b.get("hours",{}) or {}
+            open_days, total_hours = _parse_total_hours(hours)
+            attrs = b.get("attributes",{}) or {}
+
+            price_raw = attrs.get("RestaurantsPriceRange2",0) or 0
+            try: price_norm = float(price_raw)/4.0
+            except: price_norm = 0.0
+
+            city  = (b.get("city")  or "Unknown").strip()
+            state = (b.get("state") or "Unknown").strip()
+
+            wifi_raw = attrs.get("WiFi","") or ""
+            wifi = 1.0 if any(x in str(wifi_raw).lower() for x in ["free","paid"]) else 0.0
+
+            parking_raw = attrs.get("BusinessParking")
+            parking = 1.0 if isinstance(parking_raw,str) and "true" in parking_raw.lower() else 0.0
+
+            noise_map_lv = {"quiet":0.25,"average":0.5,"loud":0.75,"very_loud":1.0}
+            noise_raw = str(attrs.get("NoiseLevel","") or "").strip("'\" ").lower()
+            noise_norm = noise_map_lv.get(noise_raw, 0.0)
+
+            alc_raw = str(attrs.get("Alcohol","") or "").strip("'\" ").lower()
+            alc_norm = 1.0 if "full" in alc_raw else (0.5 if "beer" in alc_raw else 0.0)
+
+            attire_raw = str(attrs.get("RestaurantsAttire","") or "").strip("'\" ").lower()
+            attire_norm = {"casual":0.33,"dressy":0.67,"formal":1.0}.get(attire_raw, 0.0)
+
+            smoking_raw = str(attrs.get("Smoking","") or "").strip("'\" ").lower()
+            smoking_norm = {"no":0.0,"outdoor":0.5,"yes":1.0}.get(smoking_raw, 0.0)
+
+            ctx[b["business_id"]] = [
+                math.log1p(b.get("review_count",0))/10.0,
+                float(b.get("is_open",0)),
+                (b.get("latitude",0) or 0)/90.0,
+                (b.get("longitude",0) or 0)/180.0,
+                math.log1p(cat_count)/10.0,
+                open_days/7.0,
+                min(total_hours,168.0)/168.0,
+                price_norm,
+                city_map.get(city,0)/50.0,
+                wifi, parking,
+                _bool_attr(attrs,"RestaurantsDelivery"),
+                _bool_attr(attrs,"RestaurantsTakeOut"),
+                _bool_attr(attrs,"RestaurantsReservations"),
+                _bool_attr(attrs,"OutdoorSeating"),
+                _bool_attr(attrs,"RestaurantsGoodForGroups"),
+                _bool_attr(attrs,"GoodForKids"),
+                _bool_attr(attrs,"BusinessAcceptsCreditCards"),
+                state_map.get(state,0)/30.0,                 # b_state
+                _bool_attr(attrs,"HasTV"),                   # b_has_tv
+                noise_norm,                                  # b_noise_level
+                alc_norm,                                    # b_alcohol
+                _parse_nested_bool(attrs,"Ambience","casual"),    # b_ambience_casual
+                _parse_nested_bool(attrs,"Ambience","romantic"),  # b_ambience_romantic
+                _parse_nested_bool(attrs,"GoodForMeal","dinner"), # b_good_for_dinner
+                _bool_attr(attrs,"HappyHour"),               # b_happy_hour
+                _bool_attr(attrs,"Caters"),                  # b_caters
+                _bool_attr(attrs,"DriveThru"),               # b_drive_thru
+                # — new flat attrs (13)
+                _bool_attr(attrs,"BikeParking"),              # b_bike_parking
+                _bool_attr(attrs,"ByAppointmentOnly"),        # b_by_appointment
+                attire_norm,                                  # b_attire
+                _bool_attr(attrs,"WheelchairAccessible"),     # b_wheelchair
+                _bool_attr(attrs,"RestaurantsTableService"),  # b_table_service
+                _bool_attr(attrs,"DogsAllowed"),              # b_dogs_allowed
+                _bool_attr(attrs,"BusinessAcceptsBitcoin"),   # b_bitcoin
+                _bool_attr(attrs,"CoatCheck"),                # b_coat_check
+                _bool_attr(attrs,"GoodForDancing"),           # b_good_for_dancing
+                _bool_attr(attrs,"AcceptsInsurance"),         # b_accepts_insurance
+                _bool_attr(attrs,"BYOB"),                     # b_byob
+                _bool_attr(attrs,"Corkage"),                  # b_corkage
+                smoking_norm,                                 # b_smoking
+                # — ambience sub-keys (7 new)
+                _parse_nested_bool(attrs,"Ambience","classy"),
+                _parse_nested_bool(attrs,"Ambience","divey"),
+                _parse_nested_bool(attrs,"Ambience","hipster"),
+                _parse_nested_bool(attrs,"Ambience","intimate"),
+                _parse_nested_bool(attrs,"Ambience","touristy"),
+                _parse_nested_bool(attrs,"Ambience","trendy"),
+                _parse_nested_bool(attrs,"Ambience","upscale"),
+                # — good-for-meal sub-keys (5 new)
+                _parse_nested_bool(attrs,"GoodForMeal","breakfast"),
+                _parse_nested_bool(attrs,"GoodForMeal","brunch"),
+                _parse_nested_bool(attrs,"GoodForMeal","dessert"),
+                _parse_nested_bool(attrs,"GoodForMeal","lunch"),
+                _parse_nested_bool(attrs,"GoodForMeal","latenight"),
+                # — parking sub-keys (5 new)
+                _parse_nested_bool(attrs,"BusinessParking","garage"),
+                _parse_nested_bool(attrs,"BusinessParking","lot"),
+                _parse_nested_bool(attrs,"BusinessParking","street"),
+                _parse_nested_bool(attrs,"BusinessParking","valet"),
+                _parse_nested_bool(attrs,"BusinessParking","validated"),
+                # — best-nights sub-keys (7 new)
+                _parse_nested_bool(attrs,"BestNights","monday"),
+                _parse_nested_bool(attrs,"BestNights","tuesday"),
+                _parse_nested_bool(attrs,"BestNights","wednesday"),
+                _parse_nested_bool(attrs,"BestNights","thursday"),
+                _parse_nested_bool(attrs,"BestNights","friday"),
+                _parse_nested_bool(attrs,"BestNights","saturday"),
+                _parse_nested_bool(attrs,"BestNights","sunday"),
+                # — music sub-keys (7 new)
+                _parse_nested_bool(attrs,"Music","background_music"),
+                _parse_nested_bool(attrs,"Music","dj"),
+                _parse_nested_bool(attrs,"Music","jukebox"),
+                _parse_nested_bool(attrs,"Music","karaoke"),
+                _parse_nested_bool(attrs,"Music","live"),
+                _parse_nested_bool(attrs,"Music","no_music"),
+                _parse_nested_bool(attrs,"Music","video"),
+            ]
+    print(f"  ✓ Businesses: {len(ctx):,}"); return ctx
+
+
+# =========================================================
+# LOAD CHECKIN CONTEXT — 4 features
+# =========================================================
+def load_checkin_context(path):
+    ctx = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            c = json.loads(line)
+            bid = c["business_id"]
+            dates_str = c.get("date","")
+            if not dates_str:
+                ctx[bid] = [0.0,0.0,0.0,0.0]; continue
+
+            timestamps = [d.strip() for d in dates_str.split(",") if d.strip()]
+            count = len(timestamps)
+            weekend_count, peak_hours, parsed_dts = 0, [], []
+            for ts in timestamps:
+                try:
+                    dt = datetime.strptime(ts,"%Y-%m-%d %H:%M:%S")
+                    parsed_dts.append(dt)
+                    if dt.weekday() >= 5: weekend_count += 1
+                    peak_hours.append(dt.hour)
+                except: pass
+
+            weekend_ratio = weekend_count/count if count > 0 else 0.0
+            peak_hour = Counter(peak_hours).most_common(1)[0][0]/23.0 if peak_hours else 0.0
+
+            if len(parsed_dts) >= 2:
+                span_weeks = max((max(parsed_dts) - min(parsed_dts)).days / 7.0, 1.0)
+                density = count / span_weeks   # checkins/tuần
+            else:
+                density = float(count)
+
+            ctx[bid] = [math.log1p(count)/10.0, math.log1p(density)/10.0, weekend_ratio, peak_hour]
+    print(f"  ✓ Checkin: {len(ctx):,} businesses"); return ctx
+
+
+# =========================================================
+# LOAD TIP CONTEXT
+# =========================================================
+def load_tip_context(path):
+    user_tip, biz_tip = {}, {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            t = json.loads(line)
+            uid, bid = t["user_id"], t["business_id"]
+            length, comp = len(t.get("text","")), t.get("compliment_count",0)
+            if uid not in user_tip: user_tip[uid] = [0,0,0]
+            user_tip[uid][0]+=1; user_tip[uid][1]+=length; user_tip[uid][2]+=comp
+            if bid not in biz_tip:  biz_tip[bid]  = [0,0,0]
+            biz_tip[bid][0]+=1;  biz_tip[bid][1]+=length;  biz_tip[bid][2]+=comp
+    print(f"  ✓ Tips: {len(user_tip):,} users, {len(biz_tip):,} businesses")
+    return user_tip, biz_tip
+
+
+# =========================================================
+# LOAD ALL DATA
+# =========================================================
+def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx,
+                  max_reviews=None, cold_threshold=COLD_START_THRESHOLD,
+                  cache_dir="/kaggle/working", selected_features=None):
+    import pandas as pd
+    cache_file = os.path.join(cache_dir, "dataset_cache_full100.npz")
+    map_file   = os.path.join(cache_dir, "dataset_cache_full100_maps.pkl")
+
+    def filter_features(arr):
+        if selected_features is not None:
+            idx = [FEAT_NAMES.index(f) for f in selected_features if f in FEAT_NAMES]
+            if not idx:
+                print("  INFO: 0 features selected! Running as pure Matrix Factorization.")
+                return arr[:, []]
+            print(f"  Filtering → {len(idx)} features selected")
+            return arr[:, idx]
+        return arr
+
+    if max_reviews is None and os.path.exists(cache_file) and os.path.exists(map_file):
+        print("  Loading from cache (full 100 feat)...")
+        try:
+            d = np.load(cache_file)
+            all_data = TensorDataset(
+                torch.from_numpy(d["users"]).long(), torch.from_numpy(d["bizs"]).long(),
+                torch.from_numpy(filter_features(d["num"])),
+                torch.from_numpy(d["ratings"]), torch.from_numpy(d["coldu"]), torch.from_numpy(d["coldb"]))
+            with open(map_file,"rb") as f: maps = pickle.load(f)
+            print(f"  Cache loaded: {len(all_data):,} samples"); return all_data, maps["user_map"], maps["biz_map"], maps["user_counts"], maps["biz_counts"]
+        except Exception as e: print(f"  Cache failed: {e}. Rebuilding...")
+
+    print("  [Single Pass] Reading reviews...")
+    user_counts, biz_counts = Counter(), Counter()
+    user_map, biz_map = IDMapper(), IDMapper()
+    uid_l,bid_l,useful_l,funny_l,cool_l,text_len_l,stars_l,date_l = [],[],[],[],[],[],[],[]
+
+    with open(review_path,"rb") as f:
+        for i, line in enumerate(f):
+            if max_reviews and i >= max_reviews: break
+            r = orjson.loads(line)
+            uid, bid = r["user_id"], r["business_id"]
+            user_counts[uid]+=1; biz_counts[bid]+=1
+            uid_l.append(user_map.get(uid)); bid_l.append(biz_map.get(bid))
+            useful_l.append(r.get("useful",0) or 0); funny_l.append(r.get("funny",0) or 0)
+            cool_l.append(r.get("cool",0) or 0); text_len_l.append(len(r.get("text","") or ""))
+            stars_l.append(r["stars"]); date_l.append(r["date"])
+
+    N = len(uid_l); n_users = len(user_map.map); n_bizs = len(biz_map.map)
+    print(f"  {N:,} reviews | {n_users:,} users | {n_bizs:,} businesses")
+
+    users_arr = np.array(uid_l, dtype=np.int64)
+    bizs_arr  = np.array(bid_l, dtype=np.int64)
+
+    user_mat = np.zeros((n_users, USER_CTX_DIM), dtype=np.float32)
+    for uid, feats in user_ctx.items():
+        if uid in user_map.map: user_mat[user_map.map[uid]] = feats
+
+    biz_mat = np.zeros((n_bizs, BIZ_CTX_DIM), dtype=np.float32)
+    for bid, feats in biz_ctx.items():
+        if bid in biz_map.map: biz_mat[biz_map.map[bid]] = feats
+
+    utip_mat = np.zeros((n_users, 3), dtype=np.float32)
+    for uid, t in user_tip.items():
+        if uid in user_map.map:
+            cnt = max(t[0],1)
+            utip_mat[user_map.map[uid]] = [math.log1p(t[0])/10, math.log1p(t[1]/cnt)/10, math.log1p(t[2]/cnt)/10]
+
+    btip_mat = np.zeros((n_bizs, 3), dtype=np.float32)
+    for bid, t in biz_tip.items():
+        if bid in biz_map.map:
+            cnt = max(t[0],1)
+            btip_mat[biz_map.map[bid]] = [math.log1p(t[0])/10, math.log1p(t[1]/cnt)/10, math.log1p(t[2]/cnt)/10]
+
+    ck_mat = np.zeros((n_bizs, CHECKIN_DIM), dtype=np.float32)
+    for bid, c in checkin_ctx.items():
+        if bid in biz_map.map: ck_mat[biz_map.map[bid]] = c
+
+    useful   = np.array([max(0,x) for x in useful_l], dtype=np.float32)
+    funny    = np.array([max(0,x) for x in funny_l], dtype=np.float32)
+    cool     = np.array([max(0,x) for x in cool_l], dtype=np.float32)
+    text_len = np.array(text_len_l, dtype=np.float32)
+    review_feat = np.stack([np.log1p(useful)/10, np.log1p(funny)/10,
+                            np.log1p(cool)/10, np.log1p(text_len)/10], axis=1)
+
+    dts = pd.to_datetime(date_l)
+    temporal_feat = np.stack([
+        (dts.year-2015).values/10.0, dts.month.values/12.0,
+        dts.day.values/31.0, dts.weekday.values/7.0, dts.hour.values/24.0,
+    ], axis=1).astype(np.float32)
+
+    num_arr = np.concatenate([
+        user_mat[users_arr], biz_mat[bizs_arr],
+        utip_mat[users_arr], btip_mat[bizs_arr],
+        ck_mat[bizs_arr], review_feat, temporal_feat,
+    ], axis=1)
+    assert num_arr.shape[1] == NUM_DIM, f"Shape: {num_arr.shape[1]} != {NUM_DIM}"
+
+    u_cnts = np.bincount(users_arr, minlength=n_users)
+    b_cnts = np.bincount(bizs_arr,  minlength=n_bizs)
+    coldu_arr = (u_cnts[users_arr] <= cold_threshold).astype(np.float32)
+    coldb_arr = (b_cnts[bizs_arr]  <= cold_threshold).astype(np.float32)
+    ratings_arr = ((np.array(stars_l, dtype=np.float32) - TARGET_MIN) / TARGET_RANGE)
+
+    filtered = filter_features(num_arr)
+    all_data = TensorDataset(
+        torch.from_numpy(users_arr).long(), torch.from_numpy(bizs_arr).long(),
+        torch.from_numpy(filtered), torch.from_numpy(ratings_arr),
+        torch.from_numpy(coldu_arr), torch.from_numpy(coldb_arr))
+
+    if max_reviews is None:
+        os.makedirs(cache_dir, exist_ok=True)
+        print(f"  Caching to {cache_file}...")
+        np.savez_compressed(cache_file, users=users_arr, bizs=bizs_arr,
+                            num=num_arr, ratings=ratings_arr, coldu=coldu_arr, coldb=coldb_arr)
+        with open(map_file,"wb") as f:
+            pickle.dump({"user_map":user_map,"biz_map":biz_map,
+                         "user_counts":user_counts,"biz_counts":biz_counts}, f)
+
+    return all_data, user_map, biz_map, user_counts, biz_counts
+
+
+# =========================================================
+# FM MODEL
+# =========================================================
+class FMModel(nn.Module):
+    def __init__(self, n_user, n_business, num_dim, k=64, dropout=0.15):
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.k = k; self.num_dim = num_dim
+        self.bias     = nn.Parameter(torch.tensor([0.5]))
+        self.user_lin = nn.Embedding(n_user, 1)
+        self.biz_lin  = nn.Embedding(n_business, 1)
+        self.num_lin  = nn.Parameter(torch.zeros(num_dim))
+        self.user_emb = nn.Embedding(n_user, k)
+        self.biz_emb  = nn.Embedding(n_business, k)
+        self.num_emb  = nn.Parameter(torch.zeros(num_dim, k))
+        self.avg_user_emb = nn.Parameter(torch.zeros(k))
+        self.avg_biz_emb  = nn.Parameter(torch.zeros(k))
+        self.avg_user_lin = nn.Parameter(torch.zeros(1))
+        self.avg_biz_lin  = nn.Parameter(torch.zeros(1))
+        for p in [self.user_lin.weight, self.biz_lin.weight,
+                  self.user_emb.weight, self.biz_emb.weight]:
+            nn.init.normal_(p, 0, 0.01)
+        nn.init.normal_(self.num_lin, 0, 0.01)
+        nn.init.normal_(self.num_emb, 0, 0.01)
+        nn.init.normal_(self.avg_user_emb, 0, 0.01)
+        nn.init.normal_(self.avg_biz_emb, 0, 0.01)
+
+    def forward(self, user, biz, num, cold_user_mask=None, cold_biz_mask=None):
+        u_lin = self.user_lin(user).squeeze(-1)
+        b_lin = self.biz_lin(biz).squeeze(-1)
+        if cold_user_mask is not None:
+            u_lin = torch.where(cold_user_mask, self.avg_user_lin.expand_as(u_lin), u_lin)
+        if cold_biz_mask is not None:
+            b_lin = torch.where(cold_biz_mask, self.avg_biz_lin.expand_as(b_lin), b_lin)
+        linear = self.bias + u_lin + b_lin + (num * self.num_lin).sum(dim=1)
+
+        u_emb = self.user_emb(user)
+        b_emb = self.biz_emb(biz)
+        if cold_user_mask is not None:
+            u_emb = torch.where(cold_user_mask.unsqueeze(-1), self.avg_user_emb.expand_as(u_emb), u_emb)
+        if cold_biz_mask is not None:
+            b_emb = torch.where(cold_biz_mask.unsqueeze(-1), self.avg_biz_emb.expand_as(b_emb), b_emb)
+
+        all_emb = self.dropout(torch.cat([u_emb.unsqueeze(1), b_emb.unsqueeze(1),
+                                          num.unsqueeze(-1)*self.num_emb], dim=1))
+        sum_sq = all_emb.sum(dim=1)**2
+        sq_sum = (all_emb**2).sum(dim=1)
+        inter  = 0.5*(sum_sq-sq_sum).sum(dim=1)
+        out = linear + inter
+        if not self.training: out = torch.clamp(out, 0.0, 1.0)
+        return out
+
+
+# =========================================================
+# METRICS
+# =========================================================
+def compute_metrics(predictions, targets):
+    p = torch.as_tensor(predictions).cpu().float()
+    t = torch.as_tensor(targets).cpu().float()
+    mse  = torch.mean((p-t)**2).item()
+    rmse = math.sqrt(mse)
+    mae  = torch.mean(torch.abs(p-t)).item()
+    ss_res = torch.sum((t-p)**2).item()
+    ss_tot = torch.sum((t-t.mean())**2).item()
+    r2 = 1 - ss_res/ss_tot if ss_tot > 0 else 0.0
+    return {"MSE":mse,"RMSE":rmse,"MAE":mae,"R2":r2}
+
+def evaluate_model(model, loader, device):
+    was_training = model.training
+    model.eval()
+    all_preds, all_targets = [], []
+    with torch.no_grad():
+        for user, biz, num, rating, cu, cb in loader:
+            pred = model(user.to(device), biz.to(device), num.to(device),
+                         cold_user_mask=cu.bool().to(device),
+                         cold_biz_mask=cb.bool().to(device))
+            all_preds.append(denormalize_target(pred.cpu()))
+            all_targets.append(denormalize_target(rating))
+    if was_training:
+        model.train()
+    return compute_metrics(torch.cat(all_preds), torch.cat(all_targets))
+
+def print_metrics(m, prefix=""):
+    print(f"{prefix}MSE:{m['MSE']:.4f} | RMSE:{m['RMSE']:.4f} | MAE:{m['MAE']:.4f} | R2:{m['R2']:.4f}")
+
+
+# =========================================================
+# TRAIN FM
+# =========================================================
+def train_fm(all_data, n_user=None, n_business=None,
+             cold_threshold=COLD_START_THRESHOLD, epochs=300,
+             batch_size=2048, lr=0.005, train_split=0.8, val_split=0.1,
+             early_stopping_patience=30, early_stopping_min_delta=1e-4,
+             eval_every=1, experiment_name="FM"):
+
+    t_start = time.time()
+    device  = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda": torch.backends.cudnn.benchmark = True
+
+    num_feat = all_data.tensors[2].shape[1]
+    print(f"\n{'='*60}\n[{experiment_name}] {num_feat} FEATURES\n{'='*60}")
+    print(f"Device: {device}")
+
+    n = len(all_data)
+    torch.manual_seed(42)
+    idx = torch.randperm(n)
+    train_end = int(n * train_split)
+    val_end   = train_end + int(n * val_split)
+    tensors   = [t[idx] for t in all_data.tensors]
+
+    train_data = TensorDataset(*[t[:train_end]        for t in tensors])
+    val_data   = TensorDataset(*[t[train_end:val_end] for t in tensors])
+    test_data  = TensorDataset(*[t[val_end:]          for t in tensors])
+    print(f"Train:{len(train_data):,} | Val:{len(val_data):,} | Test:{len(test_data):,}")
+
+    # Recompute cold flags from train set
+    tu = train_data.tensors[0].numpy(); tb = train_data.tensors[1].numpy()
+    max_u = int(all_data.tensors[0].max())
+    max_b = int(all_data.tensors[1].max())
+    u_cnt = np.bincount(tu, minlength=max_u+1)
+    b_cnt = np.bincount(tb, minlength=max_b+1)
+    
+    # Accurate train-set cold start counts
+    train_cold_users = np.sum((u_cnt <= cold_threshold) & (u_cnt > 0))
+    train_cold_bizes = np.sum((b_cnt <= cold_threshold) & (b_cnt > 0))
+    train_active_users = np.sum(u_cnt > 0)
+    train_active_bizes = np.sum(b_cnt > 0)
+    print(f"Train set cold statistics (leak-free):")
+    print(f"  Active users: {train_active_users:,} | Cold start (≤{cold_threshold}): {train_cold_users:,} "
+          f"({train_cold_users/max(train_active_users,1)*100:.1f}%)")
+    print(f"  Active biz  : {train_active_bizes:,} | Cold start (≤{cold_threshold}): {train_cold_bizes:,} "
+          f"({train_cold_bizes/max(train_active_bizes,1)*100:.1f}%)")
+
+    for ds in [train_data, val_data, test_data]:
+        u_arr = ds.tensors[0].numpy(); b_arr = ds.tensors[1].numpy()
+        ds.tensors[4].copy_(torch.from_numpy((u_cnt[u_arr] <= cold_threshold).astype(np.float32)))
+        ds.tensors[5].copy_(torch.from_numpy((b_cnt[b_arr] <= cold_threshold).astype(np.float32)))
+
+    class FastLoader:
+        def __init__(self, ds, bs, shuffle=False):
+            self.tensors = ds.tensors; self.bs = bs; self.shuffle = shuffle; self.n = ds.tensors[0].size(0)
+        def __iter__(self):
+            self.indices = torch.randperm(self.n) if self.shuffle else torch.arange(self.n)
+            self.i = 0; return self
+        def __next__(self):
+            if self.i >= self.n: raise StopIteration
+            idx = self.indices[self.i:self.i+self.bs]; self.i += self.bs
+            return tuple(t[idx] for t in self.tensors)
+        def __len__(self): return math.ceil(self.n / self.bs)
+
+    try:
+        if device != "cuda": raise RuntimeError("CPU")
+        train_data = TensorDataset(*[t.to(device) for t in train_data.tensors])
+        val_data   = TensorDataset(*[t.to(device) for t in val_data.tensors])
+        test_data  = TensorDataset(*[t.to(device) for t in test_data.tensors])
+        train_loader = FastLoader(train_data, batch_size, shuffle=True)
+        val_loader   = FastLoader(val_data,   batch_size*2)
+        test_loader  = FastLoader(test_data,  batch_size*2)
+        print("Data loaded to GPU VRAM.")
+    except RuntimeError:
+        nw = min(4, os.cpu_count() or 1)
+        train_loader = DataLoader(train_data, batch_size, shuffle=True,  pin_memory=True, num_workers=nw, persistent_workers=True, prefetch_factor=4, drop_last=True)
+        val_loader   = DataLoader(val_data,   batch_size*2, pin_memory=True, num_workers=nw, persistent_workers=True, prefetch_factor=4)
+        test_loader  = DataLoader(test_data,  batch_size*2, pin_memory=True, num_workers=nw, persistent_workers=True, prefetch_factor=4)
+
+    if n_user     is None: n_user     = int(all_data.tensors[0].max())+1
+    if n_business is None: n_business = int(all_data.tensors[1].max())+1
+
+    model = FMModel(n_user, n_business, num_dim=num_feat, k=64, dropout=0.15).to(device)
+    if hasattr(torch,"compile"):
+        try: model = torch.compile(model, mode="reduce-overhead")
+        except: pass
+    print(f"Params: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
+
+    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=1e-5, nesterov=True)
+    loss_fn   = nn.MSELoss()
+    warmup    = optim.lr_scheduler.LinearLR(optimizer, start_factor=1/WARMUP_EPOCHS, total_iters=WARMUP_EPOCHS)
+    cosine    = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=30, T_mult=2, eta_min=1e-5)
+    scheduler = optim.lr_scheduler.SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[WARMUP_EPOCHS])
+    scaler    = torch.amp.GradScaler('cuda', enabled=(device=="cuda"))
+
+    best_val_rmse = float("inf"); best_state = None; best_epoch = 0; no_improve = 0
+    history = {"train_loss":[],"val_rmse":[],"val_mae":[],"val_r2":[]}
+
+    print(f"\nTraining [{experiment_name}]...\n")
+    for ep in range(epochs):
+        model.train()
+        total_loss = total_count = 0
+        for user, biz, num, rating, cu, cb in train_loader:
+            user   = user.to(device, non_blocking=True)
+            biz    = biz.to(device, non_blocking=True)
+            num    = num.to(device, non_blocking=True)
+            rating = rating.to(device, non_blocking=True)
+            optimizer.zero_grad()
+            with torch.amp.autocast('cuda', enabled=(device=="cuda")):
+                pred = model(user, biz, num,
+                             cold_user_mask=cu.bool().to(device, non_blocking=True),
+                             cold_biz_mask=cb.bool().to(device, non_blocking=True))
+                loss = loss_fn(pred, rating)
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            scaler.step(optimizer); scaler.update()
+            total_loss += loss.item()*len(user); total_count += len(user)
+
+        avg_loss = total_loss/total_count if total_count > 0 else float("nan")
+        history["train_loss"].append(avg_loss)
+
+        scheduler.step()
+
+        if (ep+1) % eval_every == 0:
+            vm = evaluate_model(model, val_loader, device)
+            lr_now = optimizer.param_groups[0]["lr"]
+            history["val_rmse"].append(vm["RMSE"]); history["val_mae"].append(vm["MAE"]); history["val_r2"].append(vm["R2"])
+            print(f"Epoch {ep+1:03d}/{epochs} | Loss:{avg_loss:.6f} | LR:{lr_now:.6f}")
+            print_metrics(vm, "  Val → ")
+
+            if vm["RMSE"] < best_val_rmse - early_stopping_min_delta:
+                best_val_rmse = vm["RMSE"]; best_state = copy.deepcopy(model.state_dict())
+                best_epoch = ep+1; no_improve = 0
+                print(f"  ★ Best RMSE: {best_val_rmse:.4f}")
+            else:
+                no_improve += 1
+                print(f"  No improve {no_improve}/{early_stopping_patience}")
+                if no_improve >= early_stopping_patience:
+                    print(f"\nEarly stopping at epoch {ep+1}")
+                    history["stopped_epoch"] = ep+1; break
+
+    if best_state:
+        model.load_state_dict(best_state)
+        print(f"\nLoaded best model (epoch {best_epoch}, Val RMSE:{best_val_rmse:.4f})")
+
+    train_time = time.time() - t_start
+    print(f"\n{'='*60}\nFINAL EVALUATION [{experiment_name}]\n{'='*60}")
+    results = {}
+    for split, loader in [("Train",train_loader),("Val",val_loader),("Test",test_loader)]:
+        m = evaluate_model(model, loader, device)
+        print(f"\n{split}:"); print_metrics(m, "  ")
+        results[split] = m
+
+    history.update({"best_epoch":best_epoch,"best_val_rmse":best_val_rmse,
+                    "train_time_sec":train_time,"num_features":num_feat,"experiment_name":experiment_name})
+    print(f"\n  Train time: {train_time/60:.1f} min ({train_time:.0f}s)")
+    return model, history, test_data, test_loader, train_data, val_data
+
+
+# =========================================================
+# SAVE OUTPUTS
+# =========================================================
+def save_outputs(results, out_dir="/kaggle/working"):
+    os.makedirs(out_dir, exist_ok=True)
+
+    # 1. FM model weights
+    fm_path = os.path.join(out_dir, "fm_model.pt")
+    torch.save(results["fm_model"].state_dict(), fm_path)
+    print(f"  ✓ FM model       → {fm_path}")
+
+    # 2. ID maps
+    id_map_path = os.path.join(out_dir, "id_maps.pkl")
+    with open(id_map_path, "wb") as f:
+        pickle.dump({"user_map":results["user_map"].map,"biz_map":results["biz_map"].map}, f)
+    print(f"  ✓ ID maps        → {id_map_path}")
+
+    # 3. Training history
+    history_path = os.path.join(out_dir, "fm_history.json")
+    history_s = {k:([float(x) for x in v] if isinstance(v,list) else v)
+                 for k,v in results["fm_history"].items()}
+    with open(history_path, "w") as f:
+        json.dump(history_s, f, indent=2)
+    print(f"  ✓ FM history     → {history_path}")
+
+    # 4. Model metadata
+    info_path = os.path.join(out_dir, "model_info.json")
+    info = {
+        "num_features_used":     results.get("num_features_used", NUM_DIM),
+        "n_users":               len(results["user_map"].map),
+        "n_businesses":          len(results["biz_map"].map),
+        "all_features":          FEAT_NAMES,
+        "selected_features":     results.get("selected_features", FEAT_NAMES),
+        "best_val_rmse":         results["fm_history"].get("best_val_rmse"),
+        "best_epoch":            results["fm_history"].get("best_epoch"),
+        "stopped_epoch":         results["fm_history"].get("stopped_epoch", None),
+        "train_time_sec":        results["fm_history"].get("train_time_sec"),
+        "train_time_min":        results["fm_history"].get("train_time_sec",0)/60,
+        "target_min":            TARGET_MIN,
+        "target_max":            TARGET_MAX,
+        "cold_threshold":        COLD_START_THRESHOLD,
+    }
+    with open(info_path, "w") as f:
+        json.dump(info, f, indent=2)
+    print(f"  ✓ Model info     → {info_path}")
+
+    # 5. Datasets
+    if "train_data" in results:
+        torch.save([t.cpu() for t in results["train_data"].tensors], os.path.join(out_dir, "train_data.pt"))
+        torch.save([t.cpu() for t in results["val_data"].tensors],   os.path.join(out_dir, "val_data.pt"))
+        torch.save([t.cpu() for t in results["test_data"].tensors],  os.path.join(out_dir, "test_data.pt"))
+        print(f"  ✓ Datasets       → train_data.pt, val_data.pt, test_data.pt")
+
+    print(f"\n  All outputs saved to: {out_dir}/")
+
+
+# =========================================================
+# FULL PIPELINE
+# =========================================================
+def run_full_pipeline(review_path, user_ctx, biz_ctx, user_tip, biz_tip,
+                      checkin_ctx, max_reviews=None, cold_threshold=COLD_START_THRESHOLD,
+                      selected_features=None, **fm_kwargs):
+
+    print("\n" + "="*60)
+    print("LOADING ALL DATA INTO MEMORY...")
+    print("="*60)
+    all_data, user_map, biz_map, user_counts, biz_counts = load_all_data(
+        review_path=review_path,
+        user_ctx=user_ctx, biz_ctx=biz_ctx,
+        user_tip=user_tip, biz_tip=biz_tip,
+        checkin_ctx=checkin_ctx,
+        max_reviews=max_reviews, cold_threshold=cold_threshold,
+        selected_features=selected_features)
+
+    cold_users = sum(1 for c in user_counts.values() if c <= cold_threshold)
+    cold_bizes = sum(1 for c in biz_counts.values() if c <= cold_threshold)
+    num_features_active = all_data.tensors[2].shape[1]
+
+    print(f"Total users: {len(user_counts):,} | Cold start (≤{cold_threshold}): {cold_users:,} "
+          f"({cold_users/max(len(user_counts),1)*100:.1f}%)")
+    print(f"Total biz:   {len(biz_counts):,} | Cold start (≤{cold_threshold}): {cold_bizes:,} "
+          f"({cold_bizes/max(len(biz_counts),1)*100:.1f}%)")
+    print(f"Total samples: {len(all_data):,}")
+    print(f"Numerical feature dim: {num_features_active} (out of {NUM_DIM})")
+
+    n_user     = len(user_map.map)
+    n_business = len(biz_map.map)
+
+    fm_model, fm_history, test_data, test_loader, train_data, val_data = train_fm(
+        all_data, n_user=n_user, n_business=n_business,
+        cold_threshold=cold_threshold, **fm_kwargs)
+
+    return {
+        "fm_model":     fm_model,
+        "fm_history":   fm_history,
+        "user_map":     user_map,
+        "biz_map":      biz_map,
+        "train_data":   train_data,
+        "val_data":     val_data,
+        "test_data":    test_data,
+        "num_features_used": num_features_active,
+        "selected_features": selected_features if selected_features is not None else FEAT_NAMES,
+    }
+
+
+# =========================================================
+# MAIN — Chạy tất cả 100 features, không PI/MI
+# =========================================================
+if __name__ == "__main__":
+    BASE = "/kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset"
+
+    print("="*60)
+    print(f"FM FULL CONTEXT — {NUM_DIM} FEATURES (no selection)")
+    print("="*60)
+
+    # Load contexts
+    print("\nLoading contexts...")
+    city_map          = build_city_map(f"{BASE}/yelp_academic_dataset_business.json")
+    state_map         = build_state_map(f"{BASE}/yelp_academic_dataset_business.json")
+    user_ctx          = load_user_context(f"{BASE}/yelp_academic_dataset_user.json")
+    biz_ctx           = load_business_context(f"{BASE}/yelp_academic_dataset_business.json", city_map, state_map)
+    user_tip, biz_tip = load_tip_context(f"{BASE}/yelp_academic_dataset_tip.json")
+    checkin_ctx       = load_checkin_context(f"{BASE}/yelp_academic_dataset_checkin.json")
+
+    # Run full pipeline — tất cả 100 features
+    results = run_full_pipeline(
+        review_path=f"{BASE}/yelp_academic_dataset_review.json",
+        user_ctx=user_ctx, biz_ctx=biz_ctx,
+        user_tip=user_tip, biz_tip=biz_tip,
+        checkin_ctx=checkin_ctx,
+        max_reviews=None, cold_threshold=5,
+        selected_features=None,
+        epochs=300, batch_size=2048, lr=0.005,
+        train_split=0.8, val_split=0.1,
+        early_stopping_patience=30, early_stopping_min_delta=1e-4,
+        eval_every=1, experiment_name=f"FM_Full_{NUM_DIM}feat")
+
+    # Summary
+    print(f"\n{'='*60}\nPIPELINE COMPLETE\n{'='*60}")
+    print(f"Best Val RMSE : {results['fm_history']['best_val_rmse']:.4f}")
+    print(f"Best Epoch    : {results['fm_history']['best_epoch']}")
+
+    # Save
+    print(f"\n{'='*60}\nSAVING OUTPUTS\n{'='*60}")
+    save_outputs(results, out_dir="/kaggle/working")
