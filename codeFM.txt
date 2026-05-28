@@ -1,4 +1,4 @@
-import json, orjson, math, copy, os, pickle, time
+import json, orjson, math, copy, os, pickle, time, hashlib
 import numpy as np
 from collections import Counter
 
@@ -19,33 +19,30 @@ builtins.print = print
 # =========================================================
 # CONSTANTS
 # =========================================================
-USER_CTX_DIM  = 9
-BIZ_CTX_DIM   = 72
-TIP_DIM       = 3
+USER_CTX_DIM  = 2
+BIZ_CTX_DIM   = 51
+TIP_DIM       = 2
 CHECKIN_DIM   = 4
-REVIEW_DIM    = 4
+REVIEW_DIM    = 0
 TEMPORAL_DIM  = 5
 
 NUM_DIM = USER_CTX_DIM + BIZ_CTX_DIM + TIP_DIM*2 + CHECKIN_DIM + REVIEW_DIM + TEMPORAL_DIM
-# = 9+72+6+4+4+5 = 100
+# = 2+51+4+4+0+5 = 66
 
 FEAT_NAMES = [
-    # USER (9)
-    "u_review_count","u_fans","u_useful","u_funny","u_cool",
-    "u_years_active","u_elite","u_friend_count","u_compliments",
-    # BUSINESS (72)
+    # USER (2)
+    "u_review_count","u_years_active",
+    # BUSINESS (51)
     "b_review_count","b_is_open","b_lat","b_lon","b_cat_count",
     "b_open_days","b_total_hours","b_price_range","b_city",
     "b_wifi","b_parking","b_delivery","b_takeout","b_reservations",
     "b_outdoor","b_groups","b_kids","b_credit_card",
     "b_state","b_has_tv","b_noise_level","b_alcohol",
     "b_ambience_casual","b_ambience_romantic","b_good_for_dinner",
-    "b_happy_hour","b_caters","b_drive_thru",
-    # — new flat attrs (13)
+    "b_happy_hour","b_caters",
+    # — new flat attrs (7)
     "b_bike_parking","b_by_appointment","b_attire","b_wheelchair",
     "b_table_service","b_dogs_allowed","b_bitcoin",
-    "b_coat_check","b_good_for_dancing","b_accepts_insurance",
-    "b_byob","b_corkage","b_smoking",
     # — ambience sub-keys (7 new)
     "b_ambience_classy","b_ambience_divey","b_ambience_hipster",
     "b_ambience_intimate","b_ambience_touristy","b_ambience_trendy",
@@ -56,24 +53,17 @@ FEAT_NAMES = [
     # — parking sub-keys (5 new)
     "b_parking_garage","b_parking_lot","b_parking_street",
     "b_parking_valet","b_parking_validated",
-    # — best-nights sub-keys (7 new)
-    "b_best_mon","b_best_tue","b_best_wed","b_best_thu",
-    "b_best_fri","b_best_sat","b_best_sun",
-    # — music sub-keys (7 new)
-    "b_music_bg","b_music_dj","b_music_jukebox","b_music_karaoke",
-    "b_music_live","b_music_no_music","b_music_video",
-    # TIP USER (3)
-    "ut_count","ut_avg_len","ut_avg_comp",
-    # TIP BUSINESS (3)
-    "bt_count","bt_avg_len","bt_avg_comp",
+    # TIP USER (2)
+    "ut_count","ut_avg_len",
+    # TIP BUSINESS (2)
+    "bt_count","bt_avg_len",
     # CHECKIN (4)
     "ck_count","ck_density","ck_weekend_ratio","ck_peak_hour",
-    # REVIEW (4)
-    "r_useful","r_funny","r_cool","r_text_len",
     # TEMPORAL (5)
     "t_year","t_month","t_day","t_weekday","t_hour",
 ]
 assert len(FEAT_NAMES) == NUM_DIM, f"{len(FEAT_NAMES)} != {NUM_DIM}"
+FEAT_HASH = hashlib.md5(str(FEAT_NAMES).encode()).hexdigest()[:8]
 
 TARGET_MIN, TARGET_MAX = 1.0, 5.0
 TARGET_RANGE = TARGET_MAX - TARGET_MIN
@@ -153,7 +143,7 @@ def build_state_map(path, top_n=30):
 
 
 # =========================================================
-# LOAD USER CONTEXT — 9 features
+# LOAD USER CONTEXT — 2 features
 # =========================================================
 def load_user_context(path):
     ctx = {}
@@ -165,31 +155,15 @@ def load_user_context(path):
                 years_active = max(0.0,(2024-dt.year)/10.0)
             except: years_active = 0.5
 
-            elite_str = u.get("elite","")
-            elite_count = len(elite_str) if isinstance(elite_str,list) else (len(elite_str.split(",")) if elite_str else 0)
-            friends = u.get("friends","")
-            friend_count = len([x for x in friends.split(",") if x.strip()]) if isinstance(friends,str) and friends and friends!="None" else 0
-            compliment_keys = ["compliment_hot","compliment_more","compliment_profile","compliment_cute",
-                               "compliment_list","compliment_note","compliment_plain","compliment_cool",
-                               "compliment_funny","compliment_writer","compliment_photos"]
-            total_comp = sum(u.get(k,0) or 0 for k in compliment_keys)
-
             ctx[u["user_id"]] = [
                 math.log1p(u.get("review_count",0))/10.0,
-                math.log1p(u.get("fans",0))/10.0,
-                math.log1p(max(0,u.get("useful",0) or 0))/10.0,
-                math.log1p(max(0,u.get("funny",0) or 0))/10.0,
-                math.log1p(max(0,u.get("cool",0) or 0))/10.0,
                 years_active,
-                math.log1p(elite_count)/10.0,
-                math.log1p(friend_count)/10.0,
-                math.log1p(total_comp)/10.0,
             ]
     print(f"  ✓ Users: {len(ctx):,}"); return ctx
 
 
 # =========================================================
-# LOAD BUSINESS CONTEXT — 72 features
+# LOAD BUSINESS CONTEXT — 51 features
 # =========================================================
 def load_business_context(path, city_map, state_map):
     ctx = {}
@@ -225,9 +199,6 @@ def load_business_context(path, city_map, state_map):
             attire_raw = str(attrs.get("RestaurantsAttire","") or "").strip("'\" ").lower()
             attire_norm = {"casual":0.33,"dressy":0.67,"formal":1.0}.get(attire_raw, 0.0)
 
-            smoking_raw = str(attrs.get("Smoking","") or "").strip("'\" ").lower()
-            smoking_norm = {"no":0.0,"outdoor":0.5,"yes":1.0}.get(smoking_raw, 0.0)
-
             ctx[b["business_id"]] = [
                 math.log1p(b.get("review_count",0))/10.0,
                 float(b.get("is_open",0)),
@@ -255,8 +226,7 @@ def load_business_context(path, city_map, state_map):
                 _parse_nested_bool(attrs,"GoodForMeal","dinner"), # b_good_for_dinner
                 _bool_attr(attrs,"HappyHour"),               # b_happy_hour
                 _bool_attr(attrs,"Caters"),                  # b_caters
-                _bool_attr(attrs,"DriveThru"),               # b_drive_thru
-                # — new flat attrs (13)
+                # — new flat attrs (7)
                 _bool_attr(attrs,"BikeParking"),              # b_bike_parking
                 _bool_attr(attrs,"ByAppointmentOnly"),        # b_by_appointment
                 attire_norm,                                  # b_attire
@@ -264,12 +234,6 @@ def load_business_context(path, city_map, state_map):
                 _bool_attr(attrs,"RestaurantsTableService"),  # b_table_service
                 _bool_attr(attrs,"DogsAllowed"),              # b_dogs_allowed
                 _bool_attr(attrs,"BusinessAcceptsBitcoin"),   # b_bitcoin
-                _bool_attr(attrs,"CoatCheck"),                # b_coat_check
-                _bool_attr(attrs,"GoodForDancing"),           # b_good_for_dancing
-                _bool_attr(attrs,"AcceptsInsurance"),         # b_accepts_insurance
-                _bool_attr(attrs,"BYOB"),                     # b_byob
-                _bool_attr(attrs,"Corkage"),                  # b_corkage
-                smoking_norm,                                 # b_smoking
                 # — ambience sub-keys (7 new)
                 _parse_nested_bool(attrs,"Ambience","classy"),
                 _parse_nested_bool(attrs,"Ambience","divey"),
@@ -290,22 +254,6 @@ def load_business_context(path, city_map, state_map):
                 _parse_nested_bool(attrs,"BusinessParking","street"),
                 _parse_nested_bool(attrs,"BusinessParking","valet"),
                 _parse_nested_bool(attrs,"BusinessParking","validated"),
-                # — best-nights sub-keys (7 new)
-                _parse_nested_bool(attrs,"BestNights","monday"),
-                _parse_nested_bool(attrs,"BestNights","tuesday"),
-                _parse_nested_bool(attrs,"BestNights","wednesday"),
-                _parse_nested_bool(attrs,"BestNights","thursday"),
-                _parse_nested_bool(attrs,"BestNights","friday"),
-                _parse_nested_bool(attrs,"BestNights","saturday"),
-                _parse_nested_bool(attrs,"BestNights","sunday"),
-                # — music sub-keys (7 new)
-                _parse_nested_bool(attrs,"Music","background_music"),
-                _parse_nested_bool(attrs,"Music","dj"),
-                _parse_nested_bool(attrs,"Music","jukebox"),
-                _parse_nested_bool(attrs,"Music","karaoke"),
-                _parse_nested_bool(attrs,"Music","live"),
-                _parse_nested_bool(attrs,"Music","no_music"),
-                _parse_nested_bool(attrs,"Music","video"),
             ]
     print(f"  ✓ Businesses: {len(ctx):,}"); return ctx
 
@@ -356,11 +304,11 @@ def load_tip_context(path):
         for line in f:
             t = json.loads(line)
             uid, bid = t["user_id"], t["business_id"]
-            length, comp = len(t.get("text","")), t.get("compliment_count",0)
-            if uid not in user_tip: user_tip[uid] = [0,0,0]
-            user_tip[uid][0]+=1; user_tip[uid][1]+=length; user_tip[uid][2]+=comp
-            if bid not in biz_tip:  biz_tip[bid]  = [0,0,0]
-            biz_tip[bid][0]+=1;  biz_tip[bid][1]+=length;  biz_tip[bid][2]+=comp
+            total_len = len(t.get("text",""))
+            if uid not in user_tip: user_tip[uid] = [0,0]
+            user_tip[uid][0]+=1; user_tip[uid][1]+=total_len
+            if bid not in biz_tip:  biz_tip[bid]  = [0,0]
+            biz_tip[bid][0]+=1;  biz_tip[bid][1]+=total_len
     print(f"  ✓ Tips: {len(user_tip):,} users, {len(biz_tip):,} businesses")
     return user_tip, biz_tip
 
@@ -372,8 +320,8 @@ def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx
                   max_reviews=None, cold_threshold=COLD_START_THRESHOLD,
                   cache_dir="/kaggle/working", selected_features=None):
     import pandas as pd
-    cache_file = os.path.join(cache_dir, "dataset_cache_full100.npz")
-    map_file   = os.path.join(cache_dir, "dataset_cache_full100_maps.pkl")
+    cache_file = os.path.join(cache_dir, f"dataset_cache_{FEAT_HASH}.npz")
+    map_file   = os.path.join(cache_dir, f"dataset_cache_{FEAT_HASH}_maps.pkl")
 
     def filter_features(arr):
         if selected_features is not None:
@@ -386,7 +334,7 @@ def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx
         return arr
 
     if max_reviews is None and os.path.exists(cache_file) and os.path.exists(map_file):
-        print("  Loading from cache (full 100 feat)...")
+        print(f"  Loading from cache ({FEAT_HASH})...")
         try:
             d = np.load(cache_file)
             all_data = TensorDataset(
@@ -400,7 +348,7 @@ def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx
     print("  [Single Pass] Reading reviews...")
     user_counts, biz_counts = Counter(), Counter()
     user_map, biz_map = IDMapper(), IDMapper()
-    uid_l,bid_l,useful_l,funny_l,cool_l,text_len_l,stars_l,date_l = [],[],[],[],[],[],[],[]
+    uid_l,bid_l,stars_l,date_l = [],[],[],[]
 
     with open(review_path,"rb") as f:
         for i, line in enumerate(f):
@@ -409,8 +357,6 @@ def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx
             uid, bid = r["user_id"], r["business_id"]
             user_counts[uid]+=1; biz_counts[bid]+=1
             uid_l.append(user_map.get(uid)); bid_l.append(biz_map.get(bid))
-            useful_l.append(r.get("useful",0) or 0); funny_l.append(r.get("funny",0) or 0)
-            cool_l.append(r.get("cool",0) or 0); text_len_l.append(len(r.get("text","") or ""))
             stars_l.append(r["stars"]); date_l.append(r["date"])
 
     N = len(uid_l); n_users = len(user_map.map); n_bizs = len(biz_map.map)
@@ -427,28 +373,21 @@ def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx
     for bid, feats in biz_ctx.items():
         if bid in biz_map.map: biz_mat[biz_map.map[bid]] = feats
 
-    utip_mat = np.zeros((n_users, 3), dtype=np.float32)
+    utip_mat = np.zeros((n_users, 2), dtype=np.float32)
     for uid, t in user_tip.items():
         if uid in user_map.map:
             cnt = max(t[0],1)
-            utip_mat[user_map.map[uid]] = [math.log1p(t[0])/10, math.log1p(t[1]/cnt)/10, math.log1p(t[2]/cnt)/10]
+            utip_mat[user_map.map[uid]] = [math.log1p(t[0])/10, math.log1p(t[1]/cnt)/10]
 
-    btip_mat = np.zeros((n_bizs, 3), dtype=np.float32)
+    btip_mat = np.zeros((n_bizs, 2), dtype=np.float32)
     for bid, t in biz_tip.items():
         if bid in biz_map.map:
             cnt = max(t[0],1)
-            btip_mat[biz_map.map[bid]] = [math.log1p(t[0])/10, math.log1p(t[1]/cnt)/10, math.log1p(t[2]/cnt)/10]
+            btip_mat[biz_map.map[bid]] = [math.log1p(t[0])/10, math.log1p(t[1]/cnt)/10]
 
     ck_mat = np.zeros((n_bizs, CHECKIN_DIM), dtype=np.float32)
     for bid, c in checkin_ctx.items():
         if bid in biz_map.map: ck_mat[biz_map.map[bid]] = c
-
-    useful   = np.array([max(0,x) for x in useful_l], dtype=np.float32)
-    funny    = np.array([max(0,x) for x in funny_l], dtype=np.float32)
-    cool     = np.array([max(0,x) for x in cool_l], dtype=np.float32)
-    text_len = np.array(text_len_l, dtype=np.float32)
-    review_feat = np.stack([np.log1p(useful)/10, np.log1p(funny)/10,
-                            np.log1p(cool)/10, np.log1p(text_len)/10], axis=1)
 
     dts = pd.to_datetime(date_l)
     temporal_feat = np.stack([
@@ -459,7 +398,7 @@ def load_all_data(review_path, user_ctx, biz_ctx, user_tip, biz_tip, checkin_ctx
     num_arr = np.concatenate([
         user_mat[users_arr], biz_mat[bizs_arr],
         utip_mat[users_arr], btip_mat[bizs_arr],
-        ck_mat[bizs_arr], review_feat, temporal_feat,
+        ck_mat[bizs_arr], temporal_feat,
     ], axis=1)
     assert num_arr.shape[1] == NUM_DIM, f"Shape: {num_arr.shape[1]} != {NUM_DIM}"
 
@@ -574,13 +513,52 @@ def print_metrics(m, prefix=""):
 
 
 # =========================================================
+# CHECKPOINT HELPERS
+# =========================================================
+def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch,
+                    best_val_rmse, best_epoch, history, no_improve):
+    """Lưu toàn bộ trạng thái để tiếp tục train sau."""
+    raw_model = model._orig_mod if hasattr(model, "_orig_mod") else model
+    torch.save({
+        "epoch":          epoch,
+        "model_state":    raw_model.state_dict(),
+        "optimizer_state":optimizer.state_dict(),
+        "scheduler_state":scheduler.state_dict(),
+        "scaler_state":   scaler.state_dict(),
+        "best_val_rmse":  best_val_rmse,
+        "best_epoch":     best_epoch,
+        "history":        history,
+        "no_improve":     no_improve,
+    }, path)
+    print(f"  💾 Checkpoint saved → {path}")
+
+
+def load_checkpoint(path, model, optimizer, scheduler, scaler):
+    """Tải checkpoint và trả về trạng thái training."""
+    ckpt = torch.load(path, weights_only=False)
+    raw_model = model._orig_mod if hasattr(model, "_orig_mod") else model
+    raw_model.load_state_dict(ckpt["model_state"])
+    optimizer.load_state_dict(ckpt["optimizer_state"])
+    scheduler.load_state_dict(ckpt["scheduler_state"])
+    scaler.load_state_dict(ckpt["scaler_state"])
+    print(f"  ✅ Checkpoint loaded from epoch {ckpt['epoch']} → {path}")
+    return (ckpt["epoch"], ckpt["best_val_rmse"],
+            ckpt["best_epoch"], ckpt["history"], ckpt["no_improve"])
+
+
+# =========================================================
 # TRAIN FM
 # =========================================================
+def smooth_labels(ratings, alpha=0.05):
+    """Shift predictions slightly toward mean (0.5 in normalized space)"""
+    return ratings * (1 - alpha) + 0.5 * alpha
+
 def train_fm(all_data, n_user=None, n_business=None,
              cold_threshold=COLD_START_THRESHOLD, epochs=300,
              batch_size=2048, lr=0.005, train_split=0.8, val_split=0.1,
              early_stopping_patience=30, early_stopping_min_delta=1e-4,
-             eval_every=1, experiment_name="FM"):
+             eval_every=1, experiment_name="FM",
+             checkpoint_dir="/kaggle/working", resume_from=None):
 
     t_start = time.time()
     device  = "cuda" if torch.cuda.is_available() else "cpu"
@@ -662,7 +640,7 @@ def train_fm(all_data, n_user=None, n_business=None,
     print(f"Params: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=1e-5, nesterov=True)
-    loss_fn   = nn.MSELoss()
+    loss_fn   = nn.HuberLoss(delta=0.5)
     warmup    = optim.lr_scheduler.LinearLR(optimizer, start_factor=1/WARMUP_EPOCHS, total_iters=WARMUP_EPOCHS)
     cosine    = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=30, T_mult=2, eta_min=1e-5)
     scheduler = optim.lr_scheduler.SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[WARMUP_EPOCHS])
@@ -670,9 +648,23 @@ def train_fm(all_data, n_user=None, n_business=None,
 
     best_val_rmse = float("inf"); best_state = None; best_epoch = 0; no_improve = 0
     history = {"train_loss":[],"val_rmse":[],"val_mae":[],"val_r2":[]}
+    start_epoch = 0
+
+    # ── Resume from checkpoint ──────────────────────────────
+    ckpt_path = os.path.join(checkpoint_dir, f"{experiment_name}_checkpoint.pt")
+    if resume_from is not None:
+        resume_path = resume_from if isinstance(resume_from, str) else ckpt_path
+        if os.path.exists(resume_path):
+            start_epoch, best_val_rmse, best_epoch, history, no_improve = \
+                load_checkpoint(resume_path, model, optimizer, scheduler, scaler)
+            raw_model = model._orig_mod if hasattr(model, "_orig_mod") else model
+            best_state = copy.deepcopy(raw_model.state_dict())
+            print(f"  Resuming from epoch {start_epoch+1}, best RMSE so far: {best_val_rmse:.4f}")
+        else:
+            print(f"  ⚠️  Checkpoint not found at {resume_path}, starting fresh.")
 
     print(f"\nTraining [{experiment_name}]...\n")
-    for ep in range(epochs):
+    for ep in range(start_epoch, epochs):
         model.train()
         total_loss = total_count = 0
         for user, biz, num, rating, cu, cb in train_loader:
@@ -685,7 +677,8 @@ def train_fm(all_data, n_user=None, n_business=None,
                 pred = model(user, biz, num,
                              cold_user_mask=cu.bool().to(device, non_blocking=True),
                              cold_biz_mask=cb.bool().to(device, non_blocking=True))
-                loss = loss_fn(pred, rating)
+                smooth_rating = smooth_labels(rating, alpha=0.05)
+                loss = loss_fn(pred, smooth_rating)
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -705,9 +698,15 @@ def train_fm(all_data, n_user=None, n_business=None,
             print_metrics(vm, "  Val → ")
 
             if vm["RMSE"] < best_val_rmse - early_stopping_min_delta:
-                best_val_rmse = vm["RMSE"]; best_state = copy.deepcopy(model.state_dict())
+                best_val_rmse = vm["RMSE"]
+                raw_model = model._orig_mod if hasattr(model, "_orig_mod") else model
+                best_state = copy.deepcopy(raw_model.state_dict())
                 best_epoch = ep+1; no_improve = 0
                 print(f"  ★ Best RMSE: {best_val_rmse:.4f}")
+                # Save best checkpoint
+                os.makedirs(checkpoint_dir, exist_ok=True)
+                save_checkpoint(ckpt_path, model, optimizer, scheduler, scaler,
+                                ep, best_val_rmse, best_epoch, history, no_improve)
             else:
                 no_improve += 1
                 print(f"  No improve {no_improve}/{early_stopping_patience}")
@@ -716,7 +715,8 @@ def train_fm(all_data, n_user=None, n_business=None,
                     history["stopped_epoch"] = ep+1; break
 
     if best_state:
-        model.load_state_dict(best_state)
+        raw_model = model._orig_mod if hasattr(model, "_orig_mod") else model
+        raw_model.load_state_dict(best_state)
         print(f"\nLoaded best model (epoch {best_epoch}, Val RMSE:{best_val_rmse:.4f})")
 
     train_time = time.time() - t_start
@@ -741,7 +741,10 @@ def save_outputs(results, out_dir="/kaggle/working"):
 
     # 1. FM model weights
     fm_path = os.path.join(out_dir, "fm_model.pt")
-    torch.save(results["fm_model"].state_dict(), fm_path)
+    raw_model = results["fm_model"]
+    if hasattr(raw_model, "_orig_mod"):
+        raw_model = raw_model._orig_mod
+    torch.save(raw_model.state_dict(), fm_path)
     print(f"  ✓ FM model       → {fm_path}")
 
     # 2. ID maps
@@ -794,7 +797,8 @@ def save_outputs(results, out_dir="/kaggle/working"):
 # =========================================================
 def run_full_pipeline(review_path, user_ctx, biz_ctx, user_tip, biz_tip,
                       checkin_ctx, max_reviews=None, cold_threshold=COLD_START_THRESHOLD,
-                      selected_features=None, **fm_kwargs):
+                      selected_features=None, checkpoint_dir="/kaggle/working",
+                      resume_from=None, **fm_kwargs):
 
     print("\n" + "="*60)
     print("LOADING ALL DATA INTO MEMORY...")
@@ -823,7 +827,9 @@ def run_full_pipeline(review_path, user_ctx, biz_ctx, user_tip, biz_tip,
 
     fm_model, fm_history, test_data, test_loader, train_data, val_data = train_fm(
         all_data, n_user=n_user, n_business=n_business,
-        cold_threshold=cold_threshold, **fm_kwargs)
+        cold_threshold=cold_threshold,
+        checkpoint_dir=checkpoint_dir, resume_from=resume_from,
+        **fm_kwargs)
 
     return {
         "fm_model":     fm_model,
@@ -839,13 +845,15 @@ def run_full_pipeline(review_path, user_ctx, biz_ctx, user_tip, biz_tip,
 
 
 # =========================================================
-# MAIN — Chạy tất cả 100 features, không PI/MI
+# MAIN — Chạy tất cả 66 features, không PI/MI
 # =========================================================
 if __name__ == "__main__":
     BASE = "/kaggle/input/datasets/organizations/yelp-dataset/yelp-dataset"
 
+    selected_features = None
+
     print("="*60)
-    print(f"FM FULL CONTEXT — {NUM_DIM} FEATURES (no selection)")
+    print(f"FM SELECTED CONTEXT — FULL 66 FEATURES")
     print("="*60)
 
     # Load contexts
@@ -857,18 +865,23 @@ if __name__ == "__main__":
     user_tip, biz_tip = load_tip_context(f"{BASE}/yelp_academic_dataset_tip.json")
     checkin_ctx       = load_checkin_context(f"{BASE}/yelp_academic_dataset_checkin.json")
 
-    # Run full pipeline — tất cả 100 features
+    # Set resume_from=True để tiếp tục train từ checkpoint (nếu có)
+    # Hoặc truyền đường dẫn cụ thể: resume_from="/kaggle/working/FM_Full_66feat_checkpoint.pt"
+    RESUME = False  # ← đổi thành True hoặc path string khi muốn resume
+
+    # Run pipeline with selected features
     results = run_full_pipeline(
         review_path=f"{BASE}/yelp_academic_dataset_review.json",
         user_ctx=user_ctx, biz_ctx=biz_ctx,
         user_tip=user_tip, biz_tip=biz_tip,
         checkin_ctx=checkin_ctx,
         max_reviews=None, cold_threshold=5,
-        selected_features=None,
-        epochs=300, batch_size=2048, lr=0.005,
+        selected_features=selected_features,
+        epochs=300, batch_size=2048, lr=0.01,
         train_split=0.8, val_split=0.1,
         early_stopping_patience=30, early_stopping_min_delta=1e-4,
-        eval_every=1, experiment_name=f"FM_Full_{NUM_DIM}feat")
+        eval_every=1, experiment_name="FM_Full_66feat",
+        checkpoint_dir="/kaggle/working", resume_from=RESUME)
 
     # Summary
     print(f"\n{'='*60}\nPIPELINE COMPLETE\n{'='*60}")
