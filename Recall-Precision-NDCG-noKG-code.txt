@@ -1,0 +1,612 @@
+# =========================================================
+# EVALUATE SAVED FM_KG_CC_Top66feat MODEL
+# Metrics:
+# - MSE, RMSE, MAE, R2
+# - Precision@K, Recall@K, NDCG@K
+# - Overall + Cold User + Cold Business + Any Cold + Warm
+# =========================================================
+
+import os
+import math
+import json
+import torch
+import numpy as np
+import pandas as pd
+import json, orjson, math, copy, os, pickle, time, hashlib, random
+import numpy as np
+from collections import Counter
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from datetime import datetime
+import builtins
+
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from collections import defaultdict
+from torch.utils.data import TensorDataset, DataLoader
+
+TARGET_MIN, TARGET_MAX = 1.0, 5.0
+TARGET_RANGE = TARGET_MAX - TARGET_MIN
+
+def normalize_target(r):
+    return (r - TARGET_MIN) / TARGET_RANGE
+
+def denormalize_target(p):
+    return p * TARGET_RANGE + TARGET_MIN
+
+# =========================================================
+# FM MODEL (No KG)
+# =========================================================
+class FMModel(nn.Module):
+    def __init__(self, n_user, n_business, num_dim, k=64, dropout=0.15):
+        super().__init__()
+
+        self.dropout = nn.Dropout(dropout)
+        self.k = k
+        self.num_dim = num_dim
+
+        self.bias = nn.Parameter(torch.tensor([0.5]))
+
+        self.user_lin = nn.Embedding(n_user, 1)
+        self.biz_lin  = nn.Embedding(n_business, 1)
+        self.num_lin  = nn.Parameter(torch.zeros(num_dim)) if num_dim > 0 else None
+
+        self.user_emb = nn.Embedding(n_user, k)
+        self.biz_emb  = nn.Embedding(n_business, k)
+        self.num_emb  = nn.Parameter(torch.zeros(num_dim, k)) if num_dim > 0 else None
+
+        self.avg_user_emb = nn.Parameter(torch.zeros(k))
+        self.avg_biz_emb  = nn.Parameter(torch.zeros(k))
+        self.avg_user_lin = nn.Parameter(torch.zeros(1))
+        self.avg_biz_lin  = nn.Parameter(torch.zeros(1))
+
+        for p in [self.user_lin.weight, self.biz_lin.weight,
+                  self.user_emb.weight, self.biz_emb.weight]:
+            nn.init.normal_(p, 0, 0.01)
+
+        if self.num_lin is not None:
+            nn.init.normal_(self.num_lin, 0, 0.01)
+
+        if self.num_emb is not None:
+            nn.init.normal_(self.num_emb, 0, 0.01)
+
+        nn.init.normal_(self.avg_user_emb, 0, 0.01)
+        nn.init.normal_(self.avg_biz_emb, 0, 0.01)
+
+    def forward(self, user, biz, num, cold_user_mask=None, cold_biz_mask=None):
+        u_lin = self.user_lin(user).squeeze(-1)
+        b_lin = self.biz_lin(biz).squeeze(-1)
+
+        if cold_user_mask is not None:
+            u_lin = torch.where(cold_user_mask, self.avg_user_lin.expand_as(u_lin), u_lin)
+
+        if cold_biz_mask is not None:
+            b_lin = torch.where(cold_biz_mask, self.avg_biz_lin.expand_as(b_lin), b_lin)
+
+        linear = self.bias + u_lin + b_lin
+
+        if self.num_lin is not None and num.shape[1] > 0:
+            linear = linear + (num * self.num_lin).sum(dim=1)
+
+        u_emb = self.user_emb(user)
+        b_emb = self.biz_emb(biz)
+
+        if cold_user_mask is not None:
+            u_emb = torch.where(
+                cold_user_mask.unsqueeze(-1),
+                self.avg_user_emb.expand_as(u_emb),
+                u_emb
+            )
+
+        if cold_biz_mask is not None:
+            b_emb = torch.where(
+                cold_biz_mask.unsqueeze(-1),
+                self.avg_biz_emb.expand_as(b_emb),
+                b_emb
+            )
+
+        emb_list = [u_emb.unsqueeze(1), b_emb.unsqueeze(1)]
+
+        if self.num_emb is not None and num.shape[1] > 0:
+            emb_list.append(num.unsqueeze(-1) * self.num_emb)
+
+        all_emb = self.dropout(torch.cat(emb_list, dim=1))
+
+        sum_sq = all_emb.sum(dim=1) ** 2
+        sq_sum = (all_emb ** 2).sum(dim=1)
+        inter = 0.5 * (sum_sq - sq_sum).sum(dim=1)
+
+        out = linear + inter
+
+        if not self.training:
+            out = torch.clamp(out, 0.0, 1.0)
+
+        return out
+
+
+# =========================================================
+# PATH CONFIG
+# =========================================================
+
+BASE_DIR = "/kaggle/input/notebooks/th4nhuy/fm-khong-loc-23"
+
+MODEL_PATH = os.path.join(BASE_DIR, "fm_model.pt")
+CHECKPOINT_PATH = os.path.join(BASE_DIR, "FM_Top23feat_PI_checkpoint.pt")
+
+TRAIN_DATA_PATH = os.path.join(BASE_DIR, "train_data.pt")
+VAL_DATA_PATH   = os.path.join(BASE_DIR, "val_data.pt")
+TEST_DATA_PATH  = os.path.join(BASE_DIR, "test_data.pt")
+
+MODEL_INFO_PATH = os.path.join(BASE_DIR, "model_info.json")
+
+OUT_CSV = "/kaggle/working/fm_kg_metrics_topk.csv"
+
+BATCH_SIZE = 4096
+KS = (5, 10, 20)
+REL_THRESHOLD = 4.0
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+
+
+# =========================================================
+# CHECK REQUIRED CLASS/FUNCTION
+# =========================================================
+
+if "FMModel" not in globals():
+    raise RuntimeError(
+        "Chưa có class FMModel. Hãy chạy/copy lại phần class FMModel từ code train trước."
+    )
+
+if "denormalize_target" not in globals():
+    def denormalize_target(p):
+        return p * 4.0 + 1.0
+
+
+# =========================================================
+# LOAD SAVED DATA
+# Format gốc:
+# [users, bizs, num, ratings_norm, coldu, coldb]
+# =========================================================
+
+def load_saved_tensor_dataset(path):
+    data = torch.load(path, map_location="cpu")
+
+    if not isinstance(data, (list, tuple)):
+        raise ValueError(f"{path} không phải list/tuple tensor.")
+
+    if len(data) != 6:
+        raise ValueError(f"{path} phải có 6 tensor: user, biz, num, rating, coldu, coldb. Hiện có {len(data)}")
+
+    user, biz, num, rating, coldu, coldb = data
+
+    user = user.long()
+    biz = biz.long()
+    num = num.float()
+    rating = rating.float()
+    coldu = coldu.float()
+    coldb = coldb.float()
+
+    print(f"\nLoaded: {os.path.basename(path)}")
+    print("  user  :", user.shape, user.dtype)
+    print("  biz   :", biz.shape, biz.dtype)
+    print("  num   :", num.shape, num.dtype)
+    print("  rating:", rating.shape, rating.dtype, "min/max:", rating.min().item(), rating.max().item())
+    print("  coldu :", coldu.shape, coldu.dtype, "sum:", int(coldu.sum().item()))
+    print("  coldb :", coldb.shape, coldb.dtype, "sum:", int(coldb.sum().item()))
+
+    return TensorDataset(user, biz, num, rating, coldu, coldb)
+
+
+def make_loader(dataset, batch_size=BATCH_SIZE, shuffle=False):
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=2,
+        pin_memory=True
+    )
+
+
+train_data = load_saved_tensor_dataset(TRAIN_DATA_PATH)
+val_data   = load_saved_tensor_dataset(VAL_DATA_PATH)
+test_data  = load_saved_tensor_dataset(TEST_DATA_PATH)
+
+train_loader = make_loader(train_data)
+val_loader   = make_loader(val_data)
+test_loader  = make_loader(test_data)
+
+
+# =========================================================
+# LOAD MODEL STATE
+# Ưu tiên checkpoint vì checkpoint lưu theo key "model_state"
+# =========================================================
+
+def load_state_dict():
+    if os.path.exists(CHECKPOINT_PATH):
+        print("\nLoading checkpoint:", CHECKPOINT_PATH)
+        ckpt = torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=False)
+
+        if "model_state" in ckpt:
+            state_dict = ckpt["model_state"]
+            print("  Loaded key: model_state")
+        elif "model_state_dict" in ckpt:
+            state_dict = ckpt["model_state_dict"]
+            print("  Loaded key: model_state_dict")
+        else:
+            state_dict = ckpt
+            print("  Loaded checkpoint as raw state_dict")
+
+    elif os.path.exists(MODEL_PATH):
+        print("\nLoading model:", MODEL_PATH)
+        state_dict = torch.load(MODEL_PATH, map_location="cpu", weights_only=False)
+
+    else:
+        raise FileNotFoundError("Không tìm thấy checkpoint hoặc fm_model.pt")
+
+    # Nếu model từng được torch.compile và key có prefix _orig_mod.
+    if any(k.startswith("_orig_mod.") for k in state_dict.keys()):
+        state_dict = {
+            k.replace("_orig_mod.", "", 1): v
+            for k, v in state_dict.items()
+        }
+        print("  Removed _orig_mod. prefix")
+
+    return state_dict
+
+
+state_dict = load_state_dict()
+
+print("\nState dict sample keys:")
+for i, k in enumerate(state_dict.keys()):
+    print(" ", k, state_dict[k].shape if hasattr(state_dict[k], "shape") else type(state_dict[k]))
+    if i >= 10:
+        break
+
+
+# =========================================================
+# INFER MODEL CONFIG FROM STATE_DICT
+# =========================================================
+
+n_user, k = state_dict["user_emb.weight"].shape
+n_business = state_dict["biz_emb.weight"].shape[0]
+num_dim = state_dict["num_emb"].shape[0] if "num_emb" in state_dict else test_data.tensors[2].shape[1]
+
+print("\nInferred model config:")
+print("  n_user       :", n_user)
+print("  n_business   :", n_business)
+print("  num_dim      :", num_dim)
+print("  k            :", k)
+
+
+# =========================================================
+# CREATE MODEL + LOAD WEIGHTS
+# =========================================================
+
+model = FMModel(
+    n_user=n_user,
+    n_business=n_business,
+    num_dim=num_dim,
+    k=k,
+    dropout=0.15
+).to(device)
+
+# Bắt buộc strict=True để đảm bảo model class khớp 100%
+model.load_state_dict(state_dict, strict=True)
+model.eval()
+
+print("\nModel loaded successfully with strict=True.")
+
+
+# =========================================================
+# BASIC METRICS
+# =========================================================
+
+def compute_basic_metrics(preds_real, targets_real):
+    preds_real = torch.as_tensor(preds_real).float()
+    targets_real = torch.as_tensor(targets_real).float()
+
+    mse = torch.mean((preds_real - targets_real) ** 2).item()
+    rmse = math.sqrt(mse)
+    mae = torch.mean(torch.abs(preds_real - targets_real)).item()
+
+    ss_res = torch.sum((targets_real - preds_real) ** 2).item()
+    ss_tot = torch.sum((targets_real - targets_real.mean()) ** 2).item()
+    r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+    return {
+        "MSE": mse,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R2": r2
+    }
+
+
+# =========================================================
+# TOP-K METRICS
+# =========================================================
+
+def dcg_at_k(relevances, k):
+    relevances = np.asarray(relevances, dtype=np.float32)[:k]
+
+    if len(relevances) == 0:
+        return 0.0
+
+    discounts = np.log2(np.arange(2, len(relevances) + 2))
+    return float(np.sum(relevances / discounts))
+
+
+def ndcg_at_k(relevances, k):
+    actual_dcg = dcg_at_k(relevances, k)
+    ideal_relevances = sorted(relevances, reverse=True)
+    ideal_dcg = dcg_at_k(ideal_relevances, k)
+
+    if ideal_dcg == 0:
+        return 0.0
+
+    return actual_dcg / ideal_dcg
+
+
+def compute_topk_metrics(user_ids, preds_real, targets_real, ks=(5, 10, 20), rel_threshold=4.0):
+    """
+    Ranking theo từng user trên các interaction có trong split hiện tại.
+    Relevant nếu rating thật >= rel_threshold.
+    """
+
+    user_rankings = defaultdict(list)
+
+    for u, p, t in zip(user_ids, preds_real, targets_real):
+        user_rankings[int(u)].append((float(p), float(t)))
+
+    results = {}
+
+    for k in ks:
+        precision_list = []
+        recall_list = []
+        ndcg_list = []
+
+        for u, items in user_rankings.items():
+            # Cần ít nhất 2 item để ranking có ý nghĩa
+            if len(items) < 2:
+                continue
+
+            # Sort theo prediction giảm dần
+            items_sorted = sorted(items, key=lambda x: x[0], reverse=True)
+
+            relevances = [
+                1 if true_rating >= rel_threshold else 0
+                for pred_rating, true_rating in items_sorted
+            ]
+
+            total_relevant = sum(relevances)
+
+            # User không có item positive thì bỏ qua
+            if total_relevant == 0:
+                continue
+
+            k_eff = min(k, len(relevances))
+            topk_rels = relevances[:k_eff]
+
+            precision_k = sum(topk_rels) / k_eff
+            recall_k = sum(topk_rels) / total_relevant
+            ndcg_k = ndcg_at_k(relevances, k)
+
+            precision_list.append(precision_k)
+            recall_list.append(recall_k)
+            ndcg_list.append(ndcg_k)
+
+        results[f"Precision@{k}"] = float(np.mean(precision_list)) if precision_list else 0.0
+        results[f"Recall@{k}"] = float(np.mean(recall_list)) if recall_list else 0.0
+        results[f"NDCG@{k}"] = float(np.mean(ndcg_list)) if ndcg_list else 0.0
+
+    return results
+
+
+# =========================================================
+# FULL EVALUATION
+# =========================================================
+
+def evaluate_with_topk(model, loader, device, ks=(5, 10, 20), rel_threshold=4.0):
+    was_training = model.training
+    model.eval()
+
+    all_users = []
+    all_preds_real = []
+    all_targets_real = []
+
+    with torch.no_grad():
+        for user, biz, num, rating, cu, cb in loader:
+            user = user.to(device, non_blocking=True)
+            biz = biz.to(device, non_blocking=True)
+            num = num.to(device, non_blocking=True)
+            rating = rating.to(device, non_blocking=True)
+            cu = cu.bool().to(device, non_blocking=True)
+            cb = cb.bool().to(device, non_blocking=True)
+
+            # QUAN TRỌNG:
+            # Phải truyền cold_user_mask và cold_biz_mask đúng như code train/evaluate gốc
+            pred_norm = model(
+                user,
+                biz,
+                num,
+                cold_user_mask=cu,
+                cold_biz_mask=cb
+            )
+
+            # Model output và rating đang ở thang [0,1]
+            # Đổi về rating thật [1,5]
+            pred_real = denormalize_target(pred_norm.detach().cpu())
+            target_real = denormalize_target(rating.detach().cpu())
+
+            all_users.append(user.detach().cpu())
+            all_preds_real.append(pred_real)
+            all_targets_real.append(target_real)
+
+    if was_training:
+        model.train()
+
+    all_users = torch.cat(all_users).numpy()
+    all_preds_real = torch.cat(all_preds_real)
+    all_targets_real = torch.cat(all_targets_real)
+
+    basic = compute_basic_metrics(all_preds_real, all_targets_real)
+    topk = compute_topk_metrics(
+        user_ids=all_users,
+        preds_real=all_preds_real.numpy(),
+        targets_real=all_targets_real.numpy(),
+        ks=ks,
+        rel_threshold=rel_threshold
+    )
+
+    return {**basic, **topk}
+
+
+def print_result(name, metrics):
+    print(f"\n===== {name} =====")
+    for k, v in metrics.items():
+        print(f"{k}: {v:.4f}")
+
+
+# =========================================================
+# SUBSET HELPERS FOR COLD-START
+# =========================================================
+
+def subset_dataset(dataset, mask):
+    tensors = dataset.tensors
+
+    if mask.sum().item() == 0:
+        return None
+
+    return TensorDataset(*[t[mask] for t in tensors])
+
+USER_COLS = [(0, 2), (53, 55)]
+BIZ_COLS  = [(2, 53), (55, 57), (57, 61)]
+
+def extract_biz_feature_cache(*datasets):
+    """Lấy feature-part của business từ bất kỳ sample có sẵn — 
+    không cần đọc lại JSON gốc."""
+    biz_feat_cache = {}
+    for ds in datasets:
+        bizs, num = ds.tensors[1], ds.tensors[2]
+        for i in range(bizs.shape[0]):
+            b = int(bizs[i])
+            if b not in biz_feat_cache:
+                row = num[i]
+                biz_feat_cache[b] = torch.cat([row[s:e] for s, e in BIZ_COLS])
+    return biz_feat_cache
+
+def build_candidate_num_vector(base_num_row, biz_feat_vec):
+    """Giữ nguyên user-part + temporal-part của sample thật, 
+    chỉ thay business-part bằng candidate âm."""
+    new_row = base_num_row.clone()
+    offset = 0
+    for s, e in BIZ_COLS:
+        width = e - s
+        new_row[s:e] = biz_feat_vec[offset:offset+width]
+        offset += width
+    return new_row
+def evaluate_split_and_subsets(split_name, dataset, loader):
+    rows = []
+
+    # Overall
+    metrics = evaluate_with_topk(
+        model=model,
+        loader=loader,
+        device=device,
+        ks=KS,
+        rel_threshold=REL_THRESHOLD
+    )
+
+    print_result(f"{split_name} Overall", metrics)
+
+    rows.append({
+        "Split": split_name,
+        "Subset": "Overall",
+        "NumSamples": len(dataset),
+        **metrics
+    })
+
+    # Cold/warm masks
+    coldu = dataset.tensors[4].bool()
+    coldb = dataset.tensors[5].bool()
+
+    # Các nhóm phân tích cold-start
+    subset_masks = {
+        "Cold_User": coldu,
+        "Cold_Business": coldb,
+
+        # Chỉ user cold, business không cold
+        "Cold_User_Only": coldu & (~coldb),
+
+        # Chỉ business cold, user không cold
+        "Cold_Business_Only": (~coldu) & coldb,
+
+        # User hoặc business cold
+        "Any_Cold": coldu | coldb,
+
+        # Cả user và business đều cold
+        "Both_Cold": coldu & coldb,
+
+        # Cả user và business đều không cold
+        "Warm": (~coldu) & (~coldb),
+    }
+
+    for subset_name, mask in subset_masks.items():
+        sub_ds = subset_dataset(dataset, mask)
+
+        if sub_ds is None:
+            print(f"\n===== {split_name} {subset_name} =====")
+            print("No samples.")
+            continue
+
+        sub_loader = make_loader(
+            sub_ds,
+            batch_size=BATCH_SIZE,
+            shuffle=False
+        )
+
+        sub_metrics = evaluate_with_topk(
+            model=model,
+            loader=sub_loader,
+            device=device,
+            ks=KS,
+            rel_threshold=REL_THRESHOLD
+        )
+
+        print_result(f"{split_name} {subset_name}", sub_metrics)
+
+        rows.append({
+            "Split": split_name,
+            "Subset": subset_name,
+            "NumSamples": len(sub_ds),
+            **sub_metrics
+        })
+
+    return rows
+
+
+# =========================================================
+# RUN ALL EVALUATIONS
+# =========================================================
+
+all_rows = []
+
+for split_name, dataset, loader in [
+    ("Train", train_data, train_loader),
+    ("Val", val_data, val_loader),
+    ("Test", test_data, test_loader),
+]:
+    rows = evaluate_split_and_subsets(split_name, dataset, loader)
+    all_rows.extend(rows)
+
+
+result_df = pd.DataFrame(all_rows)
+
+print("\n===== FINAL RESULT TABLE =====")
+display(result_df)
+
+result_df.to_csv(OUT_CSV, index=False)
+print("\nSaved to:", OUT_CSV)

@@ -1,0 +1,605 @@
+============================================================
+FM — TOP 23 FEATURES + KG field-level projection (128-dim)
+============================================================
+
+Loading contexts...
+  ✓ City map: top 50 cities
+  ✓ State map: top 30 states
+  ✓ Users: 1,987,897
+  ✓ Businesses: 150,346
+  ✓ Tips: 301,758 users, 106,193 businesses
+  ✓ Checkin: 131,930 businesses
+  Loading KG embeddings...
+  ✓ KG embeddings: 1,987,897 users, 150,346 businesses
+
+============================================================
+LOADING ALL DATA INTO MEMORY...
+============================================================
+  [Single Pass] Reading reviews...
+  6,990,280 reviews | 1,987,929 users | 150,346 businesses
+  ✓ User KG matrix: (1987929, 64) | Coverage: 1,987,897/1,987,929 (100.0%)
+  ✓ Biz KG matrix:  (150346, 64) | Coverage: 150,346/150,346 (100.0%)
+  Filtering → 23 features selected
+  Caching to /kaggle/working/dataset_cache_a00c8054_v2.npz...
+  ✓ KG matrices cached → /kaggle/working/dataset_cache_a00c8054_v2_kg.npz
+Total users: 1,987,929 | Cold start (≤5): 1,759,734 (88.5%)
+Total biz:   150,346 | Cold start (≤5): 12,901 (8.6%)
+Total samples: 6,990,280
+Numerical feature dim: 23 (context only, KG handled separately)
+KG user matrix: (1987929, 64) | KG biz matrix: (150346, 64)
+
+============================================================
+[FM_KG_CC_Top23feat] 23 context features | KG: YES (field-level projection)
+============================================================
+Device: cuda
+Train:5,592,224 | Val:699,028 | Test:699,028
+Train set cold statistics (leak-free):
+  Active users: 1,746,716 | Cold start (≤5): 1,567,706 (89.8%)
+  Active biz  : 150,338 | Cold start (≤5): 27,935 (18.6%)
+Data loaded to GPU VRAM.
+  KG mask: 1,987,897/1,987,929 users, 150,346/150,346 biz have KG embeddings
+Params total: 275,880,575 | Trainable: 139,030,975 | Frozen (KG): 136,849,600
+  ⚠️  Checkpoint not found at /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt, starting fresh.
+
+Training [FM_KG_CC_Top23feat]...
+
+W0619 15:36:10.035000 23 torch/_inductor/utils.py:1679] [0/0] Not enough SMs to use max_autotune_gemm mode
+Epoch 001/260 | Loss:0.054695 | LR:0.005556
+  Val → MSE:1.9607 | RMSE:1.4002 | MAE:1.1572 | R2:0.1010
+  ★ Best RMSE: 1.4002
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 002/260 | Loss:0.053609 | LR:0.007778
+  Val → MSE:1.9399 | RMSE:1.3928 | MAE:1.1435 | R2:0.1105
+  ★ Best RMSE: 1.3928
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 003/260 | Loss:0.053171 | LR:0.010000
+  Val → MSE:1.9217 | RMSE:1.3863 | MAE:1.1559 | R2:0.1188
+  ★ Best RMSE: 1.3863
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 004/260 | Loss:0.052912 | LR:0.009973
+  Val → MSE:1.9137 | RMSE:1.3834 | MAE:1.1411 | R2:0.1225
+  ★ Best RMSE: 1.3834
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 005/260 | Loss:0.052693 | LR:0.009891
+  Val → MSE:1.9089 | RMSE:1.3816 | MAE:1.1531 | R2:0.1247
+  ★ Best RMSE: 1.3816
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 006/260 | Loss:0.052522 | LR:0.009756
+  Val → MSE:1.9022 | RMSE:1.3792 | MAE:1.1386 | R2:0.1278
+  ★ Best RMSE: 1.3792
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 007/260 | Loss:0.052385 | LR:0.009568
+  Val → MSE:1.8968 | RMSE:1.3772 | MAE:1.1429 | R2:0.1303
+  ★ Best RMSE: 1.3772
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 008/260 | Loss:0.052268 | LR:0.009331
+  Val → MSE:1.8985 | RMSE:1.3778 | MAE:1.1272 | R2:0.1295
+  No improve 1/30
+Epoch 009/260 | Loss:0.052147 | LR:0.009046
+  Val → MSE:1.8898 | RMSE:1.3747 | MAE:1.1406 | R2:0.1335
+  ★ Best RMSE: 1.3747
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 010/260 | Loss:0.052036 | LR:0.008717
+  Val → MSE:1.8872 | RMSE:1.3737 | MAE:1.1358 | R2:0.1347
+  ★ Best RMSE: 1.3737
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 011/260 | Loss:0.051946 | LR:0.008347
+  Val → MSE:1.8820 | RMSE:1.3718 | MAE:1.1319 | R2:0.1371
+  ★ Best RMSE: 1.3718
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 012/260 | Loss:0.051841 | LR:0.007941
+  Val → MSE:1.8811 | RMSE:1.3715 | MAE:1.1272 | R2:0.1375
+  ★ Best RMSE: 1.3715
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 013/260 | Loss:0.051765 | LR:0.007503
+  Val → MSE:1.8774 | RMSE:1.3702 | MAE:1.1370 | R2:0.1392
+  ★ Best RMSE: 1.3702
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 014/260 | Loss:0.051672 | LR:0.007037
+  Val → MSE:1.8764 | RMSE:1.3698 | MAE:1.1383 | R2:0.1396
+  ★ Best RMSE: 1.3698
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 015/260 | Loss:0.051580 | LR:0.006549
+  Val → MSE:1.8730 | RMSE:1.3686 | MAE:1.1363 | R2:0.1412
+  ★ Best RMSE: 1.3686
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 016/260 | Loss:0.051481 | LR:0.006044
+  Val → MSE:1.8692 | RMSE:1.3672 | MAE:1.1278 | R2:0.1429
+  ★ Best RMSE: 1.3672
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 017/260 | Loss:0.051386 | LR:0.005527
+  Val → MSE:1.8643 | RMSE:1.3654 | MAE:1.1298 | R2:0.1452
+  ★ Best RMSE: 1.3654
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 018/260 | Loss:0.051280 | LR:0.005005
+  Val → MSE:1.8628 | RMSE:1.3649 | MAE:1.1230 | R2:0.1458
+  ★ Best RMSE: 1.3649
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 019/260 | Loss:0.051157 | LR:0.004483
+  Val → MSE:1.8592 | RMSE:1.3635 | MAE:1.1175 | R2:0.1475
+  ★ Best RMSE: 1.3635
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 020/260 | Loss:0.051006 | LR:0.003966
+  Val → MSE:1.8581 | RMSE:1.3631 | MAE:1.1114 | R2:0.1480
+  ★ Best RMSE: 1.3631
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 021/260 | Loss:0.050859 | LR:0.003461
+  Val → MSE:1.8483 | RMSE:1.3595 | MAE:1.1191 | R2:0.1525
+  ★ Best RMSE: 1.3595
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 022/260 | Loss:0.050704 | LR:0.002973
+  Val → MSE:1.8440 | RMSE:1.3579 | MAE:1.1200 | R2:0.1545
+  ★ Best RMSE: 1.3579
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 023/260 | Loss:0.050549 | LR:0.002508
+  Val → MSE:1.8407 | RMSE:1.3567 | MAE:1.1173 | R2:0.1560
+  ★ Best RMSE: 1.3567
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 024/260 | Loss:0.050405 | LR:0.002069
+  Val → MSE:1.8364 | RMSE:1.3551 | MAE:1.1133 | R2:0.1580
+  ★ Best RMSE: 1.3551
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 025/260 | Loss:0.050278 | LR:0.001663
+  Val → MSE:1.8349 | RMSE:1.3546 | MAE:1.1050 | R2:0.1587
+  ★ Best RMSE: 1.3546
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 026/260 | Loss:0.050169 | LR:0.001293
+  Val → MSE:1.8305 | RMSE:1.3530 | MAE:1.1129 | R2:0.1607
+  ★ Best RMSE: 1.3530
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 027/260 | Loss:0.050074 | LR:0.000964
+  Val → MSE:1.8293 | RMSE:1.3525 | MAE:1.1050 | R2:0.1612
+  ★ Best RMSE: 1.3525
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 028/260 | Loss:0.050002 | LR:0.000679
+  Val → MSE:1.8269 | RMSE:1.3516 | MAE:1.1082 | R2:0.1623
+  ★ Best RMSE: 1.3516
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 029/260 | Loss:0.049952 | LR:0.000442
+  Val → MSE:1.8267 | RMSE:1.3516 | MAE:1.1040 | R2:0.1624
+  No improve 1/30
+Epoch 030/260 | Loss:0.049906 | LR:0.000254
+  Val → MSE:1.8250 | RMSE:1.3509 | MAE:1.1067 | R2:0.1632
+  ★ Best RMSE: 1.3509
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 031/260 | Loss:0.049875 | LR:0.000119
+  Val → MSE:1.8243 | RMSE:1.3507 | MAE:1.1057 | R2:0.1635
+  ★ Best RMSE: 1.3507
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 032/260 | Loss:0.049857 | LR:0.000037
+  Val → MSE:1.8240 | RMSE:1.3505 | MAE:1.1061 | R2:0.1637
+  ★ Best RMSE: 1.3505
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 033/260 | Loss:0.049854 | LR:0.010000
+  Val → MSE:1.8244 | RMSE:1.3507 | MAE:1.1046 | R2:0.1635
+  No improve 1/30
+Epoch 034/260 | Loss:0.049893 | LR:0.009993
+  Val → MSE:1.8217 | RMSE:1.3497 | MAE:1.0973 | R2:0.1647
+  ★ Best RMSE: 1.3497
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 035/260 | Loss:0.049326 | LR:0.009973
+  Val → MSE:1.7996 | RMSE:1.3415 | MAE:1.0903 | R2:0.1748
+  ★ Best RMSE: 1.3415
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 036/260 | Loss:0.048739 | LR:0.009939
+  Val → MSE:1.7919 | RMSE:1.3386 | MAE:1.0727 | R2:0.1784
+  ★ Best RMSE: 1.3386
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 037/260 | Loss:0.048182 | LR:0.009891
+  Val → MSE:1.7755 | RMSE:1.3325 | MAE:1.0769 | R2:0.1859
+  ★ Best RMSE: 1.3325
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 038/260 | Loss:0.047669 | LR:0.009830
+  Val → MSE:1.7603 | RMSE:1.3267 | MAE:1.0765 | R2:0.1929
+  ★ Best RMSE: 1.3267
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 039/260 | Loss:0.047199 | LR:0.009756
+  Val → MSE:1.7487 | RMSE:1.3224 | MAE:1.0709 | R2:0.1982
+  ★ Best RMSE: 1.3224
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 040/260 | Loss:0.046788 | LR:0.009668
+  Val → MSE:1.7400 | RMSE:1.3191 | MAE:1.0705 | R2:0.2022
+  ★ Best RMSE: 1.3191
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 041/260 | Loss:0.046421 | LR:0.009568
+  Val → MSE:1.7322 | RMSE:1.3161 | MAE:1.0586 | R2:0.2057
+  ★ Best RMSE: 1.3161
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 042/260 | Loss:0.046109 | LR:0.009456
+  Val → MSE:1.7268 | RMSE:1.3141 | MAE:1.0636 | R2:0.2082
+  ★ Best RMSE: 1.3141
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 043/260 | Loss:0.045830 | LR:0.009331
+  Val → MSE:1.7211 | RMSE:1.3119 | MAE:1.0501 | R2:0.2108
+  ★ Best RMSE: 1.3119
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 044/260 | Loss:0.045596 | LR:0.009194
+  Val → MSE:1.7166 | RMSE:1.3102 | MAE:1.0469 | R2:0.2129
+  ★ Best RMSE: 1.3102
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 045/260 | Loss:0.045390 | LR:0.009046
+  Val → MSE:1.7129 | RMSE:1.3088 | MAE:1.0415 | R2:0.2146
+  ★ Best RMSE: 1.3088
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 046/260 | Loss:0.045208 | LR:0.008887
+  Val → MSE:1.7086 | RMSE:1.3071 | MAE:1.0469 | R2:0.2166
+  ★ Best RMSE: 1.3071
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 047/260 | Loss:0.045043 | LR:0.008717
+  Val → MSE:1.7054 | RMSE:1.3059 | MAE:1.0444 | R2:0.2180
+  ★ Best RMSE: 1.3059
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 048/260 | Loss:0.044891 | LR:0.008537
+  Val → MSE:1.7048 | RMSE:1.3057 | MAE:1.0368 | R2:0.2183
+  ★ Best RMSE: 1.3057
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 049/260 | Loss:0.044755 | LR:0.008347
+  Val → MSE:1.6983 | RMSE:1.3032 | MAE:1.0391 | R2:0.2213
+  ★ Best RMSE: 1.3032
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 050/260 | Loss:0.044624 | LR:0.008148
+  Val → MSE:1.6969 | RMSE:1.3027 | MAE:1.0423 | R2:0.2219
+  ★ Best RMSE: 1.3027
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 051/260 | Loss:0.044496 | LR:0.007941
+  Val → MSE:1.6978 | RMSE:1.3030 | MAE:1.0349 | R2:0.2215
+  No improve 1/30
+Epoch 052/260 | Loss:0.044377 | LR:0.007725
+  Val → MSE:1.6925 | RMSE:1.3009 | MAE:1.0334 | R2:0.2240
+  ★ Best RMSE: 1.3009
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 053/260 | Loss:0.044264 | LR:0.007503
+  Val → MSE:1.6899 | RMSE:1.3000 | MAE:1.0369 | R2:0.2251
+  ★ Best RMSE: 1.3000
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 054/260 | Loss:0.044155 | LR:0.007273
+  Val → MSE:1.6910 | RMSE:1.3004 | MAE:1.0275 | R2:0.2246
+  No improve 1/30
+Epoch 055/260 | Loss:0.044044 | LR:0.007037
+  Val → MSE:1.6880 | RMSE:1.2992 | MAE:1.0259 | R2:0.2260
+  ★ Best RMSE: 1.2992
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 056/260 | Loss:0.043943 | LR:0.006795
+  Val → MSE:1.6883 | RMSE:1.2993 | MAE:1.0211 | R2:0.2259
+  No improve 1/30
+Epoch 057/260 | Loss:0.043832 | LR:0.006549
+  Val → MSE:1.6854 | RMSE:1.2982 | MAE:1.0384 | R2:0.2272
+  ★ Best RMSE: 1.2982
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 058/260 | Loss:0.043741 | LR:0.006298
+  Val → MSE:1.6801 | RMSE:1.2962 | MAE:1.0287 | R2:0.2296
+  ★ Best RMSE: 1.2962
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 059/260 | Loss:0.043629 | LR:0.006044
+  Val → MSE:1.6782 | RMSE:1.2955 | MAE:1.0221 | R2:0.2305
+  ★ Best RMSE: 1.2955
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 060/260 | Loss:0.043530 | LR:0.005786
+  Val → MSE:1.6765 | RMSE:1.2948 | MAE:1.0258 | R2:0.2313
+  ★ Best RMSE: 1.2948
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 061/260 | Loss:0.043423 | LR:0.005527
+  Val → MSE:1.6759 | RMSE:1.2946 | MAE:1.0196 | R2:0.2316
+  ★ Best RMSE: 1.2946
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 062/260 | Loss:0.043341 | LR:0.005266
+  Val → MSE:1.6755 | RMSE:1.2944 | MAE:1.0179 | R2:0.2317
+  ★ Best RMSE: 1.2944
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 063/260 | Loss:0.043240 | LR:0.005005
+  Val → MSE:1.6723 | RMSE:1.2932 | MAE:1.0213 | R2:0.2332
+  ★ Best RMSE: 1.2932
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 064/260 | Loss:0.043145 | LR:0.004744
+  Val → MSE:1.6713 | RMSE:1.2928 | MAE:1.0153 | R2:0.2337
+  ★ Best RMSE: 1.2928
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 065/260 | Loss:0.043058 | LR:0.004483
+  Val → MSE:1.6706 | RMSE:1.2925 | MAE:1.0135 | R2:0.2340
+  ★ Best RMSE: 1.2925
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 066/260 | Loss:0.042978 | LR:0.004224
+  Val → MSE:1.6689 | RMSE:1.2918 | MAE:1.0153 | R2:0.2348
+  ★ Best RMSE: 1.2918
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 067/260 | Loss:0.042894 | LR:0.003966
+  Val → MSE:1.6657 | RMSE:1.2906 | MAE:1.0196 | R2:0.2362
+  ★ Best RMSE: 1.2906
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 068/260 | Loss:0.042813 | LR:0.003712
+  Val → MSE:1.6667 | RMSE:1.2910 | MAE:1.0217 | R2:0.2358
+  No improve 1/30
+Epoch 069/260 | Loss:0.042741 | LR:0.003461
+  Val → MSE:1.6660 | RMSE:1.2907 | MAE:1.0213 | R2:0.2361
+  No improve 2/30
+Epoch 070/260 | Loss:0.042663 | LR:0.003215
+  Val → MSE:1.6634 | RMSE:1.2897 | MAE:1.0147 | R2:0.2373
+  ★ Best RMSE: 1.2897
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 071/260 | Loss:0.042593 | LR:0.002973
+  Val → MSE:1.6617 | RMSE:1.2891 | MAE:1.0186 | R2:0.2381
+  ★ Best RMSE: 1.2891
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 072/260 | Loss:0.042527 | LR:0.002737
+  Val → MSE:1.6613 | RMSE:1.2889 | MAE:1.0208 | R2:0.2382
+  ★ Best RMSE: 1.2889
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 073/260 | Loss:0.042461 | LR:0.002508
+  Val → MSE:1.6605 | RMSE:1.2886 | MAE:1.0146 | R2:0.2386
+  ★ Best RMSE: 1.2886
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 074/260 | Loss:0.042408 | LR:0.002285
+  Val → MSE:1.6616 | RMSE:1.2890 | MAE:1.0128 | R2:0.2381
+  No improve 1/30
+Epoch 075/260 | Loss:0.042359 | LR:0.002069
+  Val → MSE:1.6603 | RMSE:1.2885 | MAE:1.0154 | R2:0.2387
+  No improve 2/30
+Epoch 076/260 | Loss:0.042308 | LR:0.001862
+  Val → MSE:1.6591 | RMSE:1.2881 | MAE:1.0170 | R2:0.2393
+  ★ Best RMSE: 1.2881
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 077/260 | Loss:0.042260 | LR:0.001663
+  Val → MSE:1.6581 | RMSE:1.2877 | MAE:1.0104 | R2:0.2397
+  ★ Best RMSE: 1.2877
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 078/260 | Loss:0.042213 | LR:0.001473
+  Val → MSE:1.6574 | RMSE:1.2874 | MAE:1.0161 | R2:0.2400
+  ★ Best RMSE: 1.2874
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 079/260 | Loss:0.042180 | LR:0.001293
+  Val → MSE:1.6572 | RMSE:1.2873 | MAE:1.0125 | R2:0.2401
+  No improve 1/30
+Epoch 080/260 | Loss:0.042143 | LR:0.001123
+  Val → MSE:1.6566 | RMSE:1.2871 | MAE:1.0118 | R2:0.2404
+  ★ Best RMSE: 1.2871
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 081/260 | Loss:0.042112 | LR:0.000964
+  Val → MSE:1.6588 | RMSE:1.2879 | MAE:1.0087 | R2:0.2394
+  No improve 1/30
+Epoch 082/260 | Loss:0.042086 | LR:0.000816
+  Val → MSE:1.6558 | RMSE:1.2868 | MAE:1.0116 | R2:0.2408
+  ★ Best RMSE: 1.2868
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 083/260 | Loss:0.042061 | LR:0.000679
+  Val → MSE:1.6563 | RMSE:1.2870 | MAE:1.0167 | R2:0.2406
+  No improve 1/30
+Epoch 084/260 | Loss:0.042037 | LR:0.000554
+  Val → MSE:1.6566 | RMSE:1.2871 | MAE:1.0090 | R2:0.2404
+  No improve 2/30
+Epoch 085/260 | Loss:0.042014 | LR:0.000442
+  Val → MSE:1.6556 | RMSE:1.2867 | MAE:1.0123 | R2:0.2409
+  No improve 3/30
+Epoch 086/260 | Loss:0.042000 | LR:0.000342
+  Val → MSE:1.6554 | RMSE:1.2866 | MAE:1.0091 | R2:0.2409
+  ★ Best RMSE: 1.2866
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 087/260 | Loss:0.041987 | LR:0.000254
+  Val → MSE:1.6553 | RMSE:1.2866 | MAE:1.0136 | R2:0.2410
+  No improve 1/30
+Epoch 088/260 | Loss:0.041975 | LR:0.000180
+  Val → MSE:1.6551 | RMSE:1.2865 | MAE:1.0098 | R2:0.2411
+  ★ Best RMSE: 1.2865
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 089/260 | Loss:0.041961 | LR:0.000119
+  Val → MSE:1.6555 | RMSE:1.2866 | MAE:1.0080 | R2:0.2409
+  No improve 1/30
+Epoch 090/260 | Loss:0.041956 | LR:0.000071
+  Val → MSE:1.6553 | RMSE:1.2866 | MAE:1.0109 | R2:0.2410
+  No improve 2/30
+Epoch 091/260 | Loss:0.041958 | LR:0.000037
+  Val → MSE:1.6551 | RMSE:1.2865 | MAE:1.0120 | R2:0.2411
+  No improve 3/30
+Epoch 092/260 | Loss:0.041944 | LR:0.000017
+  Val → MSE:1.6551 | RMSE:1.2865 | MAE:1.0107 | R2:0.2411
+  No improve 4/30
+Epoch 093/260 | Loss:0.041949 | LR:0.010000
+  Val → MSE:1.6552 | RMSE:1.2865 | MAE:1.0102 | R2:0.2411
+  No improve 5/30
+Epoch 094/260 | Loss:0.042484 | LR:0.009998
+  Val → MSE:1.6541 | RMSE:1.2861 | MAE:1.0196 | R2:0.2416
+  ★ Best RMSE: 1.2861
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 095/260 | Loss:0.042342 | LR:0.009993
+  Val → MSE:1.6602 | RMSE:1.2885 | MAE:1.0078 | R2:0.2387
+  No improve 1/30
+Epoch 096/260 | Loss:0.042193 | LR:0.009985
+  Val → MSE:1.6543 | RMSE:1.2862 | MAE:1.0075 | R2:0.2414
+  No improve 2/30
+Epoch 097/260 | Loss:0.042042 | LR:0.009973
+  Val → MSE:1.6534 | RMSE:1.2858 | MAE:1.0077 | R2:0.2419
+  ★ Best RMSE: 1.2858
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 098/260 | Loss:0.041899 | LR:0.009957
+  Val → MSE:1.6481 | RMSE:1.2838 | MAE:1.0085 | R2:0.2443
+  ★ Best RMSE: 1.2838
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 099/260 | Loss:0.041755 | LR:0.009939
+  Val → MSE:1.6501 | RMSE:1.2846 | MAE:0.9972 | R2:0.2434
+  No improve 1/30
+Epoch 100/260 | Loss:0.041620 | LR:0.009916
+  Val → MSE:1.6450 | RMSE:1.2826 | MAE:1.0040 | R2:0.2457
+  ★ Best RMSE: 1.2826
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 101/260 | Loss:0.041481 | LR:0.009891
+  Val → MSE:1.6454 | RMSE:1.2827 | MAE:0.9964 | R2:0.2455
+  No improve 1/30
+Epoch 102/260 | Loss:0.041361 | LR:0.009862
+  Val → MSE:1.6392 | RMSE:1.2803 | MAE:1.0060 | R2:0.2484
+  ★ Best RMSE: 1.2803
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 103/260 | Loss:0.041243 | LR:0.009830
+  Val → MSE:1.6478 | RMSE:1.2837 | MAE:0.9912 | R2:0.2444
+  No improve 1/30
+Epoch 104/260 | Loss:0.041120 | LR:0.009794
+  Val → MSE:1.6369 | RMSE:1.2794 | MAE:1.0016 | R2:0.2494
+  ★ Best RMSE: 1.2794
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 105/260 | Loss:0.041001 | LR:0.009756
+  Val → MSE:1.6361 | RMSE:1.2791 | MAE:1.0025 | R2:0.2498
+  ★ Best RMSE: 1.2791
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 106/260 | Loss:0.040894 | LR:0.009713
+  Val → MSE:1.6398 | RMSE:1.2805 | MAE:0.9906 | R2:0.2481
+  No improve 1/30
+Epoch 107/260 | Loss:0.040797 | LR:0.009668
+  Val → MSE:1.6427 | RMSE:1.2817 | MAE:0.9910 | R2:0.2468
+  No improve 2/30
+Epoch 108/260 | Loss:0.040695 | LR:0.009620
+  Val → MSE:1.6359 | RMSE:1.2790 | MAE:0.9899 | R2:0.2499
+  No improve 3/30
+Epoch 109/260 | Loss:0.040599 | LR:0.009568
+  Val → MSE:1.6371 | RMSE:1.2795 | MAE:0.9892 | R2:0.2493
+  No improve 4/30
+Epoch 110/260 | Loss:0.040509 | LR:0.009513
+  Val → MSE:1.6323 | RMSE:1.2776 | MAE:0.9997 | R2:0.2516
+  ★ Best RMSE: 1.2776
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 111/260 | Loss:0.040419 | LR:0.009456
+  Val → MSE:1.6355 | RMSE:1.2789 | MAE:1.0043 | R2:0.2501
+  No improve 1/30
+Epoch 112/260 | Loss:0.040332 | LR:0.009395
+  Val → MSE:1.6345 | RMSE:1.2785 | MAE:1.0041 | R2:0.2506
+  No improve 2/30
+Epoch 113/260 | Loss:0.040255 | LR:0.009331
+  Val → MSE:1.6385 | RMSE:1.2800 | MAE:0.9834 | R2:0.2487
+  No improve 3/30
+Epoch 114/260 | Loss:0.040167 | LR:0.009264
+  Val → MSE:1.6452 | RMSE:1.2827 | MAE:0.9853 | R2:0.2456
+  No improve 4/30
+Epoch 115/260 | Loss:0.040089 | LR:0.009194
+  Val → MSE:1.6313 | RMSE:1.2772 | MAE:0.9913 | R2:0.2520
+  ★ Best RMSE: 1.2772
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 116/260 | Loss:0.040015 | LR:0.009122
+  Val → MSE:1.6323 | RMSE:1.2776 | MAE:0.9952 | R2:0.2515
+  No improve 1/30
+Epoch 117/260 | Loss:0.039943 | LR:0.009046
+  Val → MSE:1.6308 | RMSE:1.2770 | MAE:0.9999 | R2:0.2523
+  ★ Best RMSE: 1.2770
+  💾 Checkpoint saved → /kaggle/working/FM_KG_CC_Top23feat_checkpoint.pt
+Epoch 118/260 | Loss:0.039871 | LR:0.008968
+  Val → MSE:1.6312 | RMSE:1.2772 | MAE:0.9944 | R2:0.2521
+  No improve 1/30
+Epoch 119/260 | Loss:0.039794 | LR:0.008887
+  Val → MSE:1.6329 | RMSE:1.2779 | MAE:0.9917 | R2:0.2513
+  No improve 2/30
+Epoch 120/260 | Loss:0.039724 | LR:0.008803
+  Val → MSE:1.6350 | RMSE:1.2787 | MAE:1.0022 | R2:0.2503
+  No improve 3/30
+Epoch 121/260 | Loss:0.039663 | LR:0.008717
+  Val → MSE:1.6340 | RMSE:1.2783 | MAE:1.0016 | R2:0.2508
+  No improve 4/30
+Epoch 122/260 | Loss:0.039598 | LR:0.008628
+  Val → MSE:1.6406 | RMSE:1.2809 | MAE:0.9813 | R2:0.2477
+  No improve 5/30
+Epoch 123/260 | Loss:0.039526 | LR:0.008537
+  Val → MSE:1.6358 | RMSE:1.2790 | MAE:1.0039 | R2:0.2499
+  No improve 6/30
+Epoch 124/260 | Loss:0.039463 | LR:0.008443
+  Val → MSE:1.6328 | RMSE:1.2778 | MAE:0.9921 | R2:0.2513
+  No improve 7/30
+Epoch 125/260 | Loss:0.039389 | LR:0.008347
+  Val → MSE:1.6394 | RMSE:1.2804 | MAE:0.9862 | R2:0.2483
+  No improve 8/30
+Epoch 126/260 | Loss:0.039331 | LR:0.008249
+  Val → MSE:1.6327 | RMSE:1.2778 | MAE:0.9950 | R2:0.2513
+  No improve 9/30
+Epoch 127/260 | Loss:0.039258 | LR:0.008148
+  Val → MSE:1.6342 | RMSE:1.2783 | MAE:0.9939 | R2:0.2507
+  No improve 10/30
+Epoch 128/260 | Loss:0.039203 | LR:0.008046
+  Val → MSE:1.6366 | RMSE:1.2793 | MAE:0.9862 | R2:0.2496
+  No improve 11/30
+Epoch 129/260 | Loss:0.039143 | LR:0.007941
+  Val → MSE:1.6350 | RMSE:1.2787 | MAE:0.9917 | R2:0.2503
+  No improve 12/30
+Epoch 130/260 | Loss:0.039082 | LR:0.007834
+  Val → MSE:1.6388 | RMSE:1.2802 | MAE:1.0038 | R2:0.2486
+  No improve 13/30
+Epoch 131/260 | Loss:0.039017 | LR:0.007725
+  Val → MSE:1.6324 | RMSE:1.2776 | MAE:0.9937 | R2:0.2515
+  No improve 14/30
+Epoch 132/260 | Loss:0.038964 | LR:0.007615
+  Val → MSE:1.6365 | RMSE:1.2792 | MAE:0.9887 | R2:0.2496
+  No improve 15/30
+Epoch 133/260 | Loss:0.038903 | LR:0.007503
+  Val → MSE:1.6350 | RMSE:1.2787 | MAE:0.9984 | R2:0.2503
+  No improve 16/30
+Epoch 134/260 | Loss:0.038842 | LR:0.007388
+  Val → MSE:1.6330 | RMSE:1.2779 | MAE:0.9934 | R2:0.2512
+  No improve 17/30
+Epoch 135/260 | Loss:0.038786 | LR:0.007273
+  Val → MSE:1.6336 | RMSE:1.2781 | MAE:0.9917 | R2:0.2509
+  No improve 18/30
+Epoch 136/260 | Loss:0.038724 | LR:0.007155
+  Val → MSE:1.6333 | RMSE:1.2780 | MAE:0.9899 | R2:0.2511
+  No improve 19/30
+Epoch 137/260 | Loss:0.038663 | LR:0.007037
+  Val → MSE:1.6365 | RMSE:1.2793 | MAE:0.9998 | R2:0.2496
+  No improve 20/30
+Epoch 138/260 | Loss:0.038607 | LR:0.006917
+  Val → MSE:1.6358 | RMSE:1.2790 | MAE:0.9977 | R2:0.2499
+  No improve 21/30
+Epoch 139/260 | Loss:0.038541 | LR:0.006795
+  Val → MSE:1.6368 | RMSE:1.2794 | MAE:0.9923 | R2:0.2495
+  No improve 22/30
+Epoch 140/260 | Loss:0.038493 | LR:0.006672
+  Val → MSE:1.6378 | RMSE:1.2798 | MAE:0.9962 | R2:0.2490
+  No improve 23/30
+Epoch 141/260 | Loss:0.038434 | LR:0.006549
+  Val → MSE:1.6413 | RMSE:1.2811 | MAE:0.9885 | R2:0.2474
+  No improve 24/30
+Epoch 142/260 | Loss:0.038375 | LR:0.006424
+  Val → MSE:1.6462 | RMSE:1.2830 | MAE:0.9829 | R2:0.2452
+  No improve 25/30
+Epoch 143/260 | Loss:0.038318 | LR:0.006298
+  Val → MSE:1.6389 | RMSE:1.2802 | MAE:0.9886 | R2:0.2485
+  No improve 26/30
+Epoch 144/260 | Loss:0.038267 | LR:0.006171
+  Val → MSE:1.6428 | RMSE:1.2817 | MAE:1.0034 | R2:0.2467
+  No improve 27/30
+Epoch 145/260 | Loss:0.038209 | LR:0.006044
+  Val → MSE:1.6415 | RMSE:1.2812 | MAE:0.9937 | R2:0.2473
+  No improve 28/30
+Epoch 146/260 | Loss:0.038148 | LR:0.005915
+  Val → MSE:1.6421 | RMSE:1.2814 | MAE:0.9965 | R2:0.2471
+  No improve 29/30
+Epoch 147/260 | Loss:0.038102 | LR:0.005786
+  Val → MSE:1.6419 | RMSE:1.2814 | MAE:0.9869 | R2:0.2472
+  No improve 30/30
+
+Early stopping at epoch 147
+
+Loaded best model (epoch 117, Val RMSE:1.2770)
+
+============================================================
+FINAL EVALUATION [FM_KG_CC_Top23feat]
+============================================================
+
+Train:
+  MSE:1.4352 | RMSE:1.1980 | MAE:0.9348 | R2:0.3438
+
+Val:
+  MSE:1.6308 | RMSE:1.2770 | MAE:0.9999 | R2:0.2523
+
+Test:
+  MSE:1.6397 | RMSE:1.2805 | MAE:1.0023 | R2:0.2502
+
+  Train time: 381.2 min (22874s)
+
+============================================================
+PIPELINE COMPLETE
+============================================================
+Best Val RMSE : 1.2770
+Best Epoch    : 117
+
+============================================================
+SAVING OUTPUTS
+============================================================
+  ✓ FM model       → /kaggle/working/fm_model.pt
+  ✓ ID maps        → /kaggle/working/id_maps.pkl
+  ✓ FM history     → /kaggle/working/fm_history.json
+  ✓ Model info     → /kaggle/working/model_info.json
+  ✓ Datasets       → train_data.pt, val_data.pt, test_data.pt
+
+  All outputs saved to: /kaggle/working/
